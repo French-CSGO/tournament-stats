@@ -56,11 +56,10 @@ router.get("/:id", async (req, res) => {
               ps.firstkill_ct, ps.firstkill_t,
               ps.firstdeath_ct, ps.firstdeath_t,
               ps.bomb_plants, ps.bomb_defuses,
-              ps.is_bot,
               t.id AS team_id, t.name AS team_name
        FROM player_stats ps
        LEFT JOIN team t ON t.id = ps.team_id
-       WHERE ps.map_id IN (?) AND ps.is_bot = 0
+       WHERE ps.map_id IN (?)
        ORDER BY ps.kills DESC`,
       [mapIds]
     );

@@ -63,7 +63,7 @@ router.get("/:id", async (req, res) => {
             COUNT(DISTINCT ps.map_id) AS maps_played
      FROM player_stats ps
      JOIN \`match\` m ON m.id = ps.match_id
-     WHERE ps.team_id = ? AND m.cancelled = 0 AND ps.is_bot = 0
+     WHERE ps.team_id = ? AND m.cancelled = 0
      GROUP BY ps.steam_id, ps.name
      ORDER BY kills DESC`,
     [id]
