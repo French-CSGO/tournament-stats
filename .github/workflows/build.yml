@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
+  OWNER: french-csgo
 
 jobs:
   backend:
