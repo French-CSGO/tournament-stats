@@ -8,7 +8,7 @@ set -e
 # ── À adapter ──────────────────────────────────────────────
 CONTAINER_NAME="${CONTAINER_NAME:-get5db}"   # nom du container docker
 DB_NAME="get5"
-ROOT_PASS="${ROOT_PASS:-80048821}"
+ROOT_PASS="${ROOT_PASS:?Définis ROOT_PASS=<ton_mot_de_passe_root> avant de lancer ce script}"
 REPL_USER="replicator"
 REPL_PASS="${REPL_PASS:-$(openssl rand -base64 24)}"
 DUMP_FILE="/tmp/get5_snapshot.sql.gz"
