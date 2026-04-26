@@ -60,19 +60,25 @@
 
       <div v-for="(map, i) in maps" :key="map.id" v-show="activeMap === i">
         <!-- Score par side -->
-        <div class="d-flex justify-center gap-8 pa-3 text-center">
+        <div class="d-flex justify-center align-center gap-8 pa-3 text-center flex-wrap">
           <div>
             <div class="text-caption text-medium-emphasis">{{ match.team1_name }}</div>
             <div class="text-h6">{{ map.team1_score }}</div>
-            <div class="text-caption">CT {{ map.team1_first_side === 'ct' ? map.team1_score_ct : map.team1_score_t }} / T {{ map.team1_first_side === 'ct' ? map.team1_score_t : map.team1_score_ct }}</div>
+            <div class="text-caption">
+              CT {{ map.team1_first_side === 'ct' ? map.team1_score_ct : map.team1_score_t }}
+              / T {{ map.team1_first_side === 'ct' ? map.team1_score_t : map.team1_score_ct }}
+            </div>
           </div>
-          <div class="text-h6 text-medium-emphasis mt-3">vs</div>
+          <div class="text-h6 text-medium-emphasis">vs</div>
           <div>
             <div class="text-caption text-medium-emphasis">{{ match.team2_name }}</div>
             <div class="text-h6">{{ map.team2_score }}</div>
-            <div class="text-caption">CT {{ map.team1_first_side !== 'ct' ? map.team2_score_ct : map.team2_score_t }} / T {{ map.team1_first_side !== 'ct' ? map.team2_score_t : map.team2_score_ct }}</div>
+            <div class="text-caption">
+              CT {{ map.team1_first_side !== 'ct' ? map.team2_score_ct : map.team2_score_t }}
+              / T {{ map.team1_first_side !== 'ct' ? map.team2_score_t : map.team2_score_ct }}
+            </div>
           </div>
-          <div v-if="map.demoFile" class="ml-4 mt-2">
+          <div v-if="map.demoFile">
             <v-btn
               :href="`/demos/${map.demoFile}`"
               size="small"
@@ -86,12 +92,13 @@
         <!-- Stats joueurs par équipe -->
         <v-data-table
           :headers="playerHeaders"
-          :items="map.players"
+          :items="enrichedPlayers(map.players)"
           item-value="steam_id"
           :items-per-page="-1"
           hide-default-footer
           density="compact"
           group-by="[{ key: 'team_name' }]"
+          :sort-by="[{ key: 'rating', order: 'desc' }]"
         >
           <template #group-header="{ item, toggleGroup, isGroupOpen }">
             <tr>
@@ -105,9 +112,12 @@
               </td>
             </tr>
           </template>
-          <template #item.kd="{ item }">{{ kd(item) }}</template>
-          <template #item.hs="{ item }">{{ hs(item) }}%</template>
-          <template #item.adr="{ item }">{{ adr(item) }}</template>
+          <template #item.rating="{ item }">
+            <span :class="ratingColor(item.rating)">{{ item.rating }}</span>
+          </template>
+          <template #item.kd="{ item }">{{ item.kd }}</template>
+          <template #item.hs="{ item }">{{ item.hs }}%</template>
+          <template #item.adr="{ item }">{{ item.adr }}</template>
           <template #item.multikills="{ item }">
             <span v-if="item.k5" class="text-error font-weight-bold">5K×{{ item.k5 }} </span>
             <span v-if="item.k4" class="text-warning">4K×{{ item.k4 }} </span>
@@ -141,18 +151,31 @@ onMounted(async () => {
 });
 
 const playerHeaders = [
-  { title: "Joueur", key: "name", sortable: false },
-  { title: "K", key: "kills", sortable: false },
-  { title: "D", key: "deaths", sortable: false },
-  { title: "A", key: "assists", sortable: false },
-  { title: "K/D", key: "kd", sortable: false },
-  { title: "HS%", key: "hs", sortable: false },
-  { title: "ADR", key: "adr", sortable: false },
+  { title: "Joueur",     key: "name",       sortable: false },
+  { title: "Rating",     key: "rating",     sortable: true },
+  { title: "K",          key: "kills",      sortable: true },
+  { title: "D",          key: "deaths",     sortable: true },
+  { title: "A",          key: "assists",    sortable: true },
+  { title: "K/D",        key: "kd",         sortable: true },
+  { title: "HS%",        key: "hs",         sortable: true },
+  { title: "ADR",        key: "adr",        sortable: true },
   { title: "Multikills", key: "multikills", sortable: false },
 ];
 
-const kd = (p) => (p.kills / Math.max(p.deaths, 1)).toFixed(2);
-const hs = (p) => p.kills ? ((p.headshot_kills / p.kills) * 100).toFixed(0) : "0";
-const adr = (p) => p.roundsplayed ? (p.damage / p.roundsplayed).toFixed(1) : "0";
+const enrichedPlayers = (players) =>
+  players.map((p) => ({
+    ...p,
+    kd:  (p.kills / Math.max(p.deaths, 1)).toFixed(2),
+    hs:  p.kills ? ((p.headshot_kills / p.kills) * 100).toFixed(0) : "0",
+    adr: p.roundsplayed ? (p.damage / p.roundsplayed).toFixed(1) : "0",
+  }));
+
+const ratingColor = (r) => {
+  if (r >= 1.2) return "text-success font-weight-bold";
+  if (r >= 1.0) return "text-info";
+  if (r >= 0.8) return "";
+  return "text-error";
+};
+
 const formatDate = (d) => d ? new Date(d).toLocaleDateString("fr-FR") : "";
 </script>

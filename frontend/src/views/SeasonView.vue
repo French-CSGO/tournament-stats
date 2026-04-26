@@ -17,16 +17,14 @@
             item-value="steam_id"
             :items-per-page="20"
             density="compact"
+            :sort-by="[{ key: 'rating', order: 'desc' }]"
           >
-            <template #item.kd="{ item }">
-              {{ kd(item) }}
+            <template #item.rating="{ item }">
+              <span :class="ratingColor(item.rating)">{{ item.rating }}</span>
             </template>
-            <template #item.hs="{ item }">
-              {{ hs(item) }}%
-            </template>
-            <template #item.adr="{ item }">
-              {{ adr(item) }}
-            </template>
+            <template #item.kd="{ item }">{{ item.kd }}</template>
+            <template #item.hs="{ item }">{{ item.hs }}%</template>
+            <template #item.adr="{ item }">{{ item.adr }}</template>
           </v-data-table>
         </v-card>
       </v-col>
@@ -83,21 +81,32 @@ onMounted(async () => {
 });
 
 const playerHeaders = [
-  { title: "Joueur", key: "name", sortable: true },
-  { title: "K", key: "kills", sortable: true },
-  { title: "D", key: "deaths", sortable: true },
-  { title: "A", key: "assists", sortable: true },
-  { title: "K/D", key: "kd", sortable: false },
-  { title: "HS%", key: "hs", sortable: false },
-  { title: "ADR", key: "adr", sortable: false },
-  { title: "Maps", key: "maps_played", sortable: true },
+  { title: "Joueur", key: "name",       sortable: true },
+  { title: "Rating", key: "rating",     sortable: true },
+  { title: "K",      key: "kills",      sortable: true },
+  { title: "D",      key: "deaths",     sortable: true },
+  { title: "A",      key: "assists",    sortable: true },
+  { title: "K/D",    key: "kd",         sortable: true },
+  { title: "HS%",    key: "hs",         sortable: true },
+  { title: "ADR",    key: "adr",        sortable: true },
+  { title: "Maps",   key: "maps_played",sortable: true },
 ];
 
-const playersComputed = computed(() => data.value.players);
+const playersComputed = computed(() =>
+  data.value.players.map((p) => ({
+    ...p,
+    kd:  (p.kills / Math.max(p.deaths, 1)).toFixed(2),
+    hs:  p.kills ? ((p.headshot_kills / p.kills) * 100).toFixed(0) : "0",
+    adr: p.roundsplayed ? (p.damage / p.roundsplayed).toFixed(1) : "0",
+  }))
+);
 
-const kd = (p) => (p.kills / Math.max(p.deaths, 1)).toFixed(2);
-const hs = (p) => p.kills ? ((p.headshot_kills / p.kills) * 100).toFixed(0) : "0";
-const adr = (p) => p.roundsplayed ? (p.damage / p.roundsplayed).toFixed(1) : "0";
+const ratingColor = (r) => {
+  if (r >= 1.2) return "text-success font-weight-bold";
+  if (r >= 1.0) return "text-info";
+  if (r >= 0.8) return "";
+  return "text-error";
+};
 
 const winnerColor = (m, side) =>
   m.winner_id === (side === 1 ? m.team1_id : m.team2_id) ? "success" : "default";
