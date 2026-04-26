@@ -38,10 +38,12 @@ router.get("/:id", async (req, res) => {
   );
 
   const [vetos] = await db.query(
-    `SELECT id, team_name, map, pick_or_veto, side
-     FROM veto
-     WHERE match_id = ? AND is_removed = 0
-     ORDER BY id ASC`,
+    `SELECT v.id, v.team_name, v.map, v.pick_or_veto,
+            vs.side, vs.team_name AS side_team
+     FROM veto v
+     LEFT JOIN veto_side vs ON vs.veto_id = v.id
+     WHERE v.match_id = ? AND v.is_removed = 0
+     ORDER BY v.id ASC`,
     [id]
   );
 
