@@ -97,8 +97,7 @@
           :items-per-page="-1"
           hide-default-footer
           density="compact"
-          group-by="[{ key: 'team_name' }]"
-          :sort-by="[{ key: 'rating', order: 'desc' }]"
+          :group-by="[{ key: 'team_name' }]"
         >
           <template #group-header="{ item, toggleGroup, isGroupOpen }">
             <tr>
