@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
   const [matches] = await db.query(matchQuery, params);
 
   const [players] = await db.query(
-    `SELECT ps.steam_id, ps.name,
+    `SELECT ps.steam_id, MAX(ps.name) AS name,
             SUM(ps.kills)          AS kills,
             SUM(ps.deaths)         AS deaths,
             SUM(ps.assists)        AS assists,
@@ -71,7 +71,7 @@ router.get("/:id", async (req, res) => {
      FROM player_stats ps
      JOIN \`match\` m ON m.id = ps.match_id
      WHERE ps.team_id = ? AND m.cancelled = 0
-     GROUP BY ps.steam_id, ps.name
+     GROUP BY ps.steam_id
      ORDER BY kills DESC`,
     [id]
   );
