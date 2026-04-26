@@ -37,11 +37,11 @@
         <v-chip
           v-for="v in vetos"
           :key="v.id"
-          :color="v.pick_or_ban === 'pick' ? 'success' : 'error'"
+          :color="v.pick_or_veto === 'pick' ? 'success' : 'error'"
           variant="tonal"
           size="small"
         >
-          <v-icon start size="12">{{ v.pick_or_ban === 'pick' ? 'mdi-check' : 'mdi-close' }}</v-icon>
+          <v-icon start size="12">{{ v.pick_or_veto === 'pick' ? 'mdi-check' : 'mdi-close' }}</v-icon>
           {{ v.team_name }} — {{ v.map }}
         </v-chip>
       </div>

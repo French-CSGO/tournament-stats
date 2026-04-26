@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const db = require("../db");
+const { calcRating } = require("../utils/rating");
 
 const router = Router();
 
@@ -37,7 +38,7 @@ router.get("/:id", async (req, res) => {
   );
 
   const [vetos] = await db.query(
-    `SELECT id, team_name, map, pick_or_ban, side
+    `SELECT id, team_name, map, pick_or_veto, side
      FROM veto
      WHERE match_id = ? AND is_removed = 0
      ORDER BY id ASC`,
@@ -67,7 +68,10 @@ router.get("/:id", async (req, res) => {
 
   const mapsWithStats = maps.map((map) => ({
     ...map,
-    players: playerStats.filter((p) => p.map_id === map.id),
+    players: playerStats
+      .filter((p) => p.map_id === map.id)
+      .map((p) => ({ ...p, rating: calcRating(p) }))
+      .sort((a, b) => b.rating - a.rating),
   }));
 
   res.json({ match, maps: mapsWithStats, vetos });

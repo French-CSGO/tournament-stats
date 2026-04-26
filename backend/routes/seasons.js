@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const db = require("../db");
+const { calcRating } = require("../utils/rating");
 
 const router = Router();
 
@@ -68,7 +69,11 @@ router.get("/:id", async (req, res) => {
     [id]
   );
 
-  res.json({ season, matches, players });
+  const playersWithRating = players
+    .map((p) => ({ ...p, rating: calcRating(p) }))
+    .sort((a, b) => b.rating - a.rating);
+
+  res.json({ season, matches, players: playersWithRating });
 });
 
 module.exports = router;
