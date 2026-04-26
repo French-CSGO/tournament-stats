@@ -17,10 +17,13 @@ systemctl enable mariadb
 systemctl start mariadb
 
 echo "=== [2/3] Écriture de la config replica ==="
+mkdir -p /var/log/mysql
+chown -R mysql:mysql /var/log/mysql
+
 cat > /etc/mysql/mariadb.conf.d/99-replication-replica.cnf <<EOF
 [mysqld]
 server-id          = 2
-relay_log          = /var/log/mysql/mysql-relay-bin.log
+relay_log          = mysql-relay-bin
 read_only          = 1
 replicate_do_db    = ${DB_NAME}
 log_slave_updates  = 1
