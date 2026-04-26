@@ -58,7 +58,7 @@ router.get("/:id", async (req, res) => {
               ps.v1, ps.v2, ps.v3, ps.v4, ps.v5,
               ps.firstkill_ct, ps.firstkill_t,
               ps.firstdeath_ct, ps.firstdeath_t,
-              ps.bomb_plants, ps.bomb_defuses,
+              ps.bomb_plants, ps.bomb_defuses, ps.kast,
               t.id AS team_id, t.name AS team_name
        FROM player_stats ps
        LEFT JOIN team t ON t.id = ps.team_id

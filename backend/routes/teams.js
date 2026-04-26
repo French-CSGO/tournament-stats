@@ -61,6 +61,11 @@ router.get("/:id", async (req, res) => {
             SUM(ps.headshot_kills) AS headshot_kills,
             SUM(ps.damage)         AS damage,
             SUM(ps.roundsplayed)   AS roundsplayed,
+            SUM(ps.k2)             AS k2,
+            SUM(ps.k3)             AS k3,
+            SUM(ps.k4)             AS k4,
+            SUM(ps.k5)             AS k5,
+            SUM(ps.kast)           AS kast,
             COUNT(DISTINCT ps.map_id) AS maps_played
      FROM player_stats ps
      JOIN \`match\` m ON m.id = ps.match_id

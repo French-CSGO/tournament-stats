@@ -60,6 +60,7 @@ router.get("/:id", async (req, res) => {
             SUM(ps.v3)             AS v3,
             SUM(ps.v4)             AS v4,
             SUM(ps.v5)             AS v5,
+            SUM(ps.kast)           AS kast,
             COUNT(DISTINCT ps.match_id) AS maps_played
      FROM player_stats ps
      JOIN \`match\` m ON m.id = ps.match_id
