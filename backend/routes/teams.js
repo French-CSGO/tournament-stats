@@ -61,6 +61,7 @@ router.get("/:id", async (req, res) => {
             SUM(ps.headshot_kills) AS headshot_kills,
             SUM(ps.damage)         AS damage,
             SUM(ps.roundsplayed)   AS roundsplayed,
+            SUM(ps.k1)             AS k1,
             SUM(ps.k2)             AS k2,
             SUM(ps.k3)             AS k3,
             SUM(ps.k4)             AS k4,

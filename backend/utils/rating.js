@@ -1,14 +1,17 @@
-// HLTV Rating 2.0 approximation
-// Uses kast if available, falls back to 0.7 average
+const AVG_KPR = 0.679;
+const AVG_SPR = 0.317;
+const AVG_RMK = 1.277;
+
 function calcRating(p) {
   const r = p.roundsplayed;
   if (!r) return 0;
-  const kpr    = p.kills / r;
-  const dpr    = p.deaths / r;
-  const adr    = (p.damage || 0) / r;
-  const kast   = p.kast != null ? p.kast / r : 0.7;
-  const impact = 2.13 * kpr + 0.42 * ((p.assists || 0) / r) - 0.41;
-  const rating = 0.0073 * kast + 0.3591 * kpr - 0.5329 * dpr + 0.2372 * impact + 0.0032 * adr + 0.1587;
+
+  const killRating   = (p.kills / r) / AVG_KPR;
+  const survivalRating = ((r - p.deaths) / r) / AVG_SPR;
+  const killcount    = (p.k1 || 0) + 4*(p.k2 || 0) + 9*(p.k3 || 0) + 16*(p.k4 || 0) + 25*(p.k5 || 0);
+  const rmkRating    = (killcount / r) / AVG_RMK;
+
+  const rating = (killRating + 0.7 * survivalRating + rmkRating) / 2.7;
   return Math.round(rating * 100) / 100;
 }
 

@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
       `SELECT ps.map_id, ps.steam_id, ps.name,
               ps.kills, ps.deaths, ps.assists, ps.headshot_kills,
               ps.damage, ps.roundsplayed,
-              ps.k2, ps.k3, ps.k4, ps.k5,
+              ps.k1, ps.k2, ps.k3, ps.k4, ps.k5,
               ps.v1, ps.v2, ps.v3, ps.v4, ps.v5,
               ps.firstkill_ct, ps.firstkill_t,
               ps.firstdeath_ct, ps.firstdeath_t,
