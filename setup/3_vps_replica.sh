@@ -20,6 +20,7 @@ MASTER_LOG_POS="${MASTER_LOG_POS:?Définis MASTER_LOG_POS=XXX}"
 echo "=== Configuration de la réplication ==="
 mariadb -u root <<SQL
 STOP SLAVE;
+RESET SLAVE ALL;
 CHANGE MASTER TO
     MASTER_HOST='${MASTER_HOST}',
     MASTER_PORT=${MASTER_PORT},
