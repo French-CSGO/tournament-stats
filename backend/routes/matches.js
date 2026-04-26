@@ -42,7 +42,7 @@ router.get("/:id", async (req, res) => {
             vs.side, vs.team_name AS side_team
      FROM veto v
      LEFT JOIN veto_side vs ON vs.veto_id = v.id
-     WHERE v.match_id = ? AND v.is_removed = 0
+     WHERE v.match_id = ?
      ORDER BY v.id ASC`,
     [id]
   );
