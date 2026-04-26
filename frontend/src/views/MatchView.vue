@@ -90,40 +90,32 @@
         </div>
 
         <!-- Stats joueurs par équipe -->
-        <v-data-table
-          :headers="playerHeaders"
-          :items="enrichedPlayers(map.players)"
-          item-value="steam_id"
-          :items-per-page="-1"
-          hide-default-footer
-          density="compact"
-          :group-by="[{ key: 'team_name' }]"
-        >
-          <template #group-header="{ item, toggleGroup, isGroupOpen }">
-            <tr>
-              <td :colspan="playerHeaders.length" class="bg-surface-variant">
-                <v-btn
-                  variant="text"
-                  size="small"
-                  :prepend-icon="isGroupOpen(item) ? 'mdi-chevron-down' : 'mdi-chevron-right'"
-                  @click="toggleGroup(item)"
-                >{{ item.value }}</v-btn>
-              </td>
-            </tr>
-          </template>
-          <template #item.rating="{ item }">
-            <span :class="ratingColor(item.rating)">{{ item.rating }}</span>
-          </template>
-          <template #item.kd="{ item }">{{ item.kd }}</template>
-          <template #item.hs="{ item }">{{ item.hs }}%</template>
-          <template #item.adr="{ item }">{{ item.adr }}</template>
-          <template #item.multikills="{ item }">
-            <span v-if="item.k5" class="text-error font-weight-bold">5K×{{ item.k5 }} </span>
-            <span v-if="item.k4" class="text-warning">4K×{{ item.k4 }} </span>
-            <span v-if="item.k3">3K×{{ item.k3 }} </span>
-            <span v-if="item.k2" class="text-medium-emphasis">2K×{{ item.k2 }}</span>
-          </template>
-        </v-data-table>
+        <template v-for="team in teamsForMap(map)" :key="team.name">
+          <div class="px-4 py-2 bg-surface-variant text-subtitle-2">{{ team.name }}</div>
+          <v-data-table
+            :headers="playerHeaders"
+            :items="team.players"
+            item-value="steam_id"
+            :items-per-page="-1"
+            hide-default-footer
+            density="compact"
+          >
+            <template #item.rating="{ item }">
+              <span :class="ratingColor(item.rating)">{{ item.rating }}</span>
+            </template>
+            <template #item.kd="{ item }">{{ item.kd }}</template>
+            <template #item.hs="{ item }">{{ item.hs }}%</template>
+            <template #item.adr="{ item }">{{ item.adr }}</template>
+            <template #item.multikills="{ item }">
+              <div class="d-flex gap-1 flex-wrap">
+                <v-chip v-if="item.k5" color="error"   size="x-small" variant="flat">5K <strong class="ml-1">×{{ item.k5 }}</strong></v-chip>
+                <v-chip v-if="item.k4" color="warning" size="x-small" variant="flat">4K <strong class="ml-1">×{{ item.k4 }}</strong></v-chip>
+                <v-chip v-if="item.k3" color="info"    size="x-small" variant="tonal">3K <strong class="ml-1">×{{ item.k3 }}</strong></v-chip>
+                <v-chip v-if="item.k2" color="default" size="x-small" variant="tonal">2K <strong class="ml-1">×{{ item.k2 }}</strong></v-chip>
+              </div>
+            </template>
+          </v-data-table>
+        </template>
       </div>
     </v-card>
   </div>
@@ -168,6 +160,16 @@ const enrichedPlayers = (players) =>
     hs:  p.kills ? ((p.headshot_kills / p.kills) * 100).toFixed(0) : "0",
     adr: p.roundsplayed ? (p.damage / p.roundsplayed).toFixed(1) : "0",
   }));
+
+const teamsForMap = (map) => {
+  const players = enrichedPlayers(map.players);
+  const teamMap = new Map();
+  for (const p of players) {
+    if (!teamMap.has(p.team_name)) teamMap.set(p.team_name, []);
+    teamMap.get(p.team_name).push(p);
+  }
+  return [...teamMap.entries()].map(([name, players]) => ({ name, players }));
+};
 
 const ratingColor = (r) => {
   if (r >= 1.2) return "text-success font-weight-bold";
