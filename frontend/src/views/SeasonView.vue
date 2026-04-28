@@ -17,7 +17,7 @@
             :headers="playerHeaders"
             :items="playersComputed"
             item-value="steam_id"
-            :items-per-page="-1"
+            :items-per-page="20"
             density="compact"
             :sort-by="[{ key: 'rating', order: 'desc' }]"
           >

@@ -76,7 +76,6 @@ router.get("/", async (req, res) => {
         HAVING SUM(ps.roundsplayed) >= 10
       ) agg
       ORDER BY rating DESC
-      LIMIT 20
     `, params);
 
     // Weapon fav per player
