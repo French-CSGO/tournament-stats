@@ -25,7 +25,7 @@
         :key="team.id"
         cols="12" sm="6" md="4" lg="3"
       >
-        <v-card color="surface" hover @click="openTeam(team)">
+        <v-card color="surface" hover :to="`/teams/${team.id}`">
           <v-card-title class="text-subtitle-1">{{ team.name }}</v-card-title>
           <v-card-text>
             <v-chip v-if="team.tag" size="x-small" class="mr-1">{{ team.tag }}</v-chip>
@@ -36,11 +36,11 @@
     </v-row>
 
     <!-- Dialog équipe -->
-    <v-dialog v-model="dialog" max-width="900">
+    <v-dialog v-model="dialog" max-width="900" @update:model-value="v => !v && router.push('/teams')">
       <v-card v-if="selected" color="surface">
         <v-card-title class="d-flex align-center justify-space-between pa-4">
           <span>{{ selected.team.name }}</span>
-          <v-btn icon="mdi-close" variant="text" @click="dialog = false" />
+          <v-btn icon="mdi-close" variant="text" @click="closeDialog" />
         </v-card-title>
 
         <v-card-text>
@@ -67,7 +67,7 @@
               :key="m.id"
               :to="`/match/${m.id}`"
               :subtitle="m.season_name"
-              @click="dialog = false"
+              @click="closeDialog"
             >
               <template #title>
                 <span>{{ m.team1_name }}</span>
@@ -85,9 +85,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { getTeams, getTeam } from "../api/index.js";
 
+const route = useRoute();
+const router = useRouter();
 const teams = ref([]);
 const loading = ref(true);
 const search = ref("");
@@ -98,7 +101,19 @@ onMounted(async () => {
   const { data } = await getTeams();
   teams.value = data;
   loading.value = false;
+  if (route.params.id) await loadTeam(parseInt(route.params.id));
 });
+
+watch(() => route.params.id, async (id) => {
+  if (id) await loadTeam(parseInt(id));
+  else { dialog.value = false; selected.value = null; }
+});
+
+async function loadTeam(id) {
+  const { data } = await getTeam(id);
+  selected.value = data;
+  dialog.value = true;
+}
 
 const filtered = computed(() =>
   search.value
@@ -109,10 +124,9 @@ const filtered = computed(() =>
     : teams.value
 );
 
-async function openTeam(team) {
-  const { data } = await getTeam(team.id);
-  selected.value = data;
-  dialog.value = true;
+function closeDialog() {
+  dialog.value = false;
+  router.push("/teams");
 }
 
 const playersComputed = computed(() => selected.value?.players ?? []);

@@ -5,7 +5,7 @@
       <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" />
       <h1 class="text-h5">{{ data.season.name }}</h1>
       <v-spacer />
-      <v-btn prepend-icon="mdi-chart-bar" variant="tonal" size="small" :to="`/stats?season_id=${route.params.id}`">Stats détaillées</v-btn>
+      <v-btn prepend-icon="mdi-chart-bar" variant="tonal" size="small" :to="`/stats/season/${route.params.id}`">Stats détaillées</v-btn>
     </div>
 
     <v-row>

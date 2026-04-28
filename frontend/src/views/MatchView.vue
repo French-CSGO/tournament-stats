@@ -64,19 +64,11 @@
           <div>
             <div class="text-caption text-medium-emphasis">{{ match.team1_name }}</div>
             <div class="text-h6">{{ map.team1_score }}</div>
-            <div class="text-caption">
-              CT {{ map.team1_first_side === 'ct' ? map.team1_score_ct : map.team1_score_t }}
-              / T {{ map.team1_first_side === 'ct' ? map.team1_score_t : map.team1_score_ct }}
-            </div>
           </div>
           <div class="text-h6 text-medium-emphasis">vs</div>
           <div>
             <div class="text-caption text-medium-emphasis">{{ match.team2_name }}</div>
             <div class="text-h6">{{ map.team2_score }}</div>
-            <div class="text-caption">
-              CT {{ map.team1_first_side !== 'ct' ? map.team2_score_ct : map.team2_score_t }}
-              / T {{ map.team1_first_side !== 'ct' ? map.team2_score_t : map.team2_score_ct }}
-            </div>
           </div>
           <div v-if="map.demoFile">
             <v-btn

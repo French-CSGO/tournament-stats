@@ -12,8 +12,10 @@ export default createRouter({
     { path: "/",             component: SeasonsView },
     { path: "/season/:id",   component: SeasonView },
     { path: "/match/:id",    component: MatchView },
-    { path: "/teams",        component: TeamsView },
-    { path: "/stats",        component: StatsView },
+    { path: "/teams",          component: TeamsView },
+    { path: "/teams/:id",      component: TeamsView },
+    { path: "/stats",              component: StatsView },
+    { path: "/stats/season/:id",   component: StatsView },
     { path: "/admin",        component: AdminView },
   ],
 });
