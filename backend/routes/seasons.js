@@ -64,8 +64,9 @@ router.get("/:id", async (req, res) => {
             SUM(ps.kast)           AS kast,
             COUNT(DISTINCT ps.map_id)   AS maps_played
      FROM player_stats ps
-     JOIN \`match\` m ON m.id = ps.match_id
-     WHERE m.season_id = ? AND m.cancelled = 0
+     JOIN map_stats ms ON ms.id = ps.map_id AND ms.end_time IS NOT NULL
+     JOIN \`match\` m  ON m.id = ps.match_id
+     WHERE m.season_id = ? AND m.cancelled = 0 AND ps.roundsplayed > 0
      GROUP BY ps.steam_id
      ORDER BY kills DESC`,
     [id]
