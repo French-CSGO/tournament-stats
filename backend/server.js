@@ -8,6 +8,8 @@ const seasonsRouter = require("./routes/seasons");
 const matchesRouter = require("./routes/matches");
 const teamsRouter = require("./routes/teams");
 const demosRouter = require("./routes/demos");
+const adminRouter = require("./routes/admin");
+const statsRouter = require("./routes/stats");
 
 const app = express();
 
@@ -28,6 +30,8 @@ app.use("/api/seasons", seasonsRouter);
 app.use("/api/matches", matchesRouter);
 app.use("/api/teams", teamsRouter);
 app.use("/api/demos", demosRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/stats", statsRouter);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
