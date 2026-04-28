@@ -40,7 +40,7 @@
               :headers="playerHeaders"
               :items="data.players"
               density="compact"
-              :items-per-page="20"
+              :items-per-page="-1"
               :sort-by="[{ key: 'rating', order: 'desc' }]"
             >
               <template #item.rating="{ item }">
