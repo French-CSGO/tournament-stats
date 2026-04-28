@@ -36,9 +36,20 @@
         <v-col cols="12" lg="8">
           <v-card color="surface">
             <v-card-title class="text-subtitle-1">Top joueurs</v-card-title>
+            <div class="px-4 pb-2">
+              <v-text-field
+                v-model="playerSearch"
+                prepend-inner-icon="mdi-magnify"
+                placeholder="Nom ou SteamID..."
+                variant="outlined"
+                density="compact"
+                clearable
+                hide-details
+              />
+            </div>
             <v-data-table
               :headers="playerHeaders"
-              :items="data.players"
+              :items="playersFiltered"
               density="compact"
               :items-per-page="20"
               :sort-by="[{ key: 'rating', order: 'desc' }]"
@@ -91,6 +102,7 @@ const loading = ref(true);
 const selectedSeason = ref(route.params.id ? parseInt(route.params.id) : null);
 const seasons = ref([]);
 const data = ref({ kpis: {}, players: [], mapStats: [], weaponData: [] });
+const playerSearch = ref("");
 
 const seasonId   = computed(() => selectedSeason.value);
 const seasonName = computed(() => seasons.value.find(s => s.id === seasonId.value)?.name || "");
@@ -116,6 +128,14 @@ onMounted(async () => {
   const { data: s } = await getSeasons();
   seasons.value = s;
   await load();
+});
+
+const playersFiltered = computed(() => {
+  const q = playerSearch.value?.toLowerCase().trim();
+  if (!q) return data.value.players;
+  return data.value.players.filter(
+    (p) => p.name?.toLowerCase().includes(q) || p.steam_id?.toString().includes(q)
+  );
 });
 
 const kpiCards = computed(() => [

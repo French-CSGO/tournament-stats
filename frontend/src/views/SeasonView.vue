@@ -13,9 +13,20 @@
       <v-col cols="12" lg="7">
         <v-card color="surface">
           <v-card-title class="text-subtitle-1">Stats joueurs</v-card-title>
+          <div class="px-4 pb-2">
+            <v-text-field
+              v-model="playerSearch"
+              prepend-inner-icon="mdi-magnify"
+              placeholder="Nom ou SteamID..."
+              variant="outlined"
+              density="compact"
+              clearable
+              hide-details
+            />
+          </div>
           <v-data-table
             :headers="playerHeaders"
-            :items="playersComputed"
+            :items="playersFiltered"
             item-value="steam_id"
             :items-per-page="20"
             density="compact"
@@ -35,32 +46,45 @@
       <v-col cols="12" lg="5">
         <v-card color="surface">
           <v-card-title class="text-subtitle-1">Matchs</v-card-title>
-          <v-list lines="two" density="compact">
-            <v-list-item
-              v-for="match in data.matches"
-              :key="match.id"
-              :to="`/match/${match.id}`"
-              :subtitle="formatDate(match.start_time)"
-            >
-              <template #title>
-                <span class="font-weight-medium">{{ match.team1_name }}</span>
-                <v-chip
-                  class="mx-2"
-                  size="x-small"
-                  :color="winnerColor(match, 1)"
-                  variant="flat"
-                >{{ match.team1_series_score ?? match.team1_score }}</v-chip>
-                <span class="text-medium-emphasis">vs</span>
-                <v-chip
-                  class="mx-2"
-                  size="x-small"
-                  :color="winnerColor(match, 2)"
-                  variant="flat"
-                >{{ match.team2_series_score ?? match.team2_score }}</v-chip>
-                <span class="font-weight-medium">{{ match.team2_name }}</span>
-              </template>
-            </v-list-item>
-          </v-list>
+          <div class="px-4 pb-2">
+            <v-text-field
+              v-model="matchSearch"
+              prepend-inner-icon="mdi-magnify"
+              placeholder="Nom d'équipe..."
+              variant="outlined"
+              density="compact"
+              clearable
+              hide-details
+            />
+          </div>
+          <v-data-table
+            :headers="matchHeaders"
+            :items="matchesFiltered"
+            :items-per-page="10"
+            density="compact"
+            :sort-by="[{ key: 'start_time', order: 'desc' }]"
+          >
+            <template #item.match="{ item }">
+              <router-link :to="`/match/${item.id}`" class="text-decoration-none text-primary">
+                <span :class="item.winner_id === item.team1_id ? 'font-weight-bold' : 'text-medium-emphasis'">
+                  {{ item.team1_name }}
+                </span>
+                <v-chip class="mx-1" size="x-small" :color="winnerColor(item, 1)" variant="flat">
+                  {{ item.team1_series_score ?? item.team1_score }}
+                </v-chip>
+                <span class="text-medium-emphasis">–</span>
+                <v-chip class="mx-1" size="x-small" :color="winnerColor(item, 2)" variant="flat">
+                  {{ item.team2_series_score ?? item.team2_score }}
+                </v-chip>
+                <span :class="item.winner_id === item.team2_id ? 'font-weight-bold' : 'text-medium-emphasis'">
+                  {{ item.team2_name }}
+                </span>
+              </router-link>
+            </template>
+            <template #item.start_time="{ item }">
+              <span class="text-caption text-medium-emphasis">{{ formatDate(item.start_time) }}</span>
+            </template>
+          </v-data-table>
         </v-card>
       </v-col>
     </v-row>
@@ -75,6 +99,8 @@ import { getSeason } from "../api/index.js";
 const route = useRoute();
 const loading = ref(true);
 const data = ref({ season: {}, matches: [], players: [] });
+const playerSearch = ref("");
+const matchSearch  = ref("");
 
 onMounted(async () => {
   const { data: d } = await getSeason(route.params.id);
@@ -82,16 +108,21 @@ onMounted(async () => {
   loading.value = false;
 });
 
+const matchHeaders = [
+  { title: "Match", key: "match",      sortable: false },
+  { title: "Date",  key: "start_time", sortable: true  },
+];
+
 const playerHeaders = [
-  { title: "Joueur", key: "name",       sortable: true },
-  { title: "Rating", key: "rating",     sortable: true },
-  { title: "K",      key: "kills",      sortable: true },
-  { title: "D",      key: "deaths",     sortable: true },
-  { title: "A",      key: "assists",    sortable: true },
-  { title: "K/D",    key: "kd",         sortable: true },
-  { title: "HS%",    key: "hs",         sortable: true },
-  { title: "ADR",    key: "adr",        sortable: true },
-  { title: "Maps",   key: "maps_played",sortable: true },
+  { title: "Joueur", key: "name",        sortable: true },
+  { title: "Rating", key: "rating",      sortable: true },
+  { title: "K",      key: "kills",       sortable: true },
+  { title: "D",      key: "deaths",      sortable: true },
+  { title: "A",      key: "assists",     sortable: true },
+  { title: "K/D",    key: "kd",          sortable: true },
+  { title: "HS%",    key: "hs",          sortable: true },
+  { title: "ADR",    key: "adr",         sortable: true },
+  { title: "Maps",   key: "maps_played", sortable: true },
 ];
 
 const playersComputed = computed(() =>
@@ -102,6 +133,24 @@ const playersComputed = computed(() =>
     adr: p.roundsplayed ? (p.damage / p.roundsplayed).toFixed(1) : "0",
   }))
 );
+
+const playersFiltered = computed(() => {
+  const q = playerSearch.value?.toLowerCase().trim();
+  if (!q) return playersComputed.value;
+  return playersComputed.value.filter(
+    (p) => p.name?.toLowerCase().includes(q) || p.steam_id?.toString().includes(q)
+  );
+});
+
+const matchesFiltered = computed(() => {
+  const q = matchSearch.value?.toLowerCase().trim();
+  if (!q) return data.value.matches;
+  return data.value.matches.filter(
+    (m) =>
+      m.team1_name?.toLowerCase().includes(q) ||
+      m.team2_name?.toLowerCase().includes(q)
+  );
+});
 
 const ratingColor = (r) => {
   if (r >= 1.2) return "text-success font-weight-bold";
