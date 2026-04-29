@@ -16,11 +16,6 @@ const app = express();
 app.use(morgan("dev"));
 app.use(cors());
 
-// Raw binary body for demo uploads
-app.use("/api/demos", (req, res, next) => {
-  if (req.method === "POST") return next();
-  express.json()(req, res, next);
-});
 app.use(express.json());
 
 // Static demo files
