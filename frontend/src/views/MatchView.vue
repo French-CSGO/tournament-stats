@@ -59,18 +59,7 @@
     <!-- Veto -->
     <v-card v-if="vetos.length" color="surface" class="mb-4 pa-3">
       <div class="text-caption text-medium-emphasis font-weight-medium mb-2">VETO</div>
-      <div class="d-flex flex-wrap gap-2">
-        <v-chip
-          v-for="v in vetos"
-          :key="v.id"
-          :color="v.pick_or_veto === 'pick' ? 'success' : 'error'"
-          variant="tonal"
-          size="small"
-        >
-          <v-icon start size="12">{{ v.pick_or_veto === 'pick' ? 'mdi-check' : 'mdi-close' }}</v-icon>
-          {{ v.team_name }} — {{ v.map }}
-        </v-chip>
-      </div>
+      <VetoDisplay :vetos="vetos" />
     </v-card>
 
     <!-- Maps -->
@@ -132,8 +121,8 @@
             density="compact"
           >
             <template #item.name="{ item }">
-              <div class="d-flex align-center gap-2">
-                <v-avatar size="24" class="flex-shrink-0">
+              <div class="d-flex align-center" style="gap:10px">
+                <v-avatar size="26" class="flex-shrink-0">
                   <v-img :src="`/api/players/${item.steam_id}/avatar`" :alt="item.name" />
                 </v-avatar>
                 <span class="text-body-2">{{ item.name }}</span>
@@ -172,10 +161,10 @@
             <template #item.adr="{ item }">{{ item.adr }}</template>
             <template #item.multikills="{ item }">
               <div class="d-flex gap-1 flex-wrap">
-                <v-chip v-if="item.k5" color="error"   size="x-small" variant="flat">5K×{{ item.k5 }}</v-chip>
-                <v-chip v-if="item.k4" color="warning" size="x-small" variant="flat">4K×{{ item.k4 }}</v-chip>
-                <v-chip v-if="item.k3" color="info"    size="x-small" variant="tonal">3K×{{ item.k3 }}</v-chip>
-                <v-chip v-if="item.k2" color="default" size="x-small" variant="tonal">2K×{{ item.k2 }}</v-chip>
+                <v-chip v-if="item.k5" color="error"   size="x-small" variant="flat">5K ×{{ item.k5 }}</v-chip>
+                <v-chip v-if="item.k4" color="warning" size="x-small" variant="flat">4K ×{{ item.k4 }}</v-chip>
+                <v-chip v-if="item.k3" color="info"    size="x-small" variant="tonal">3K ×{{ item.k3 }}</v-chip>
+                <v-chip v-if="item.k2" color="default" size="x-small" variant="tonal">2K ×{{ item.k2 }}</v-chip>
                 <span v-if="!item.k5 && !item.k4 && !item.k3 && !item.k2" class="text-medium-emphasis">—</span>
               </div>
             </template>
@@ -190,6 +179,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getMatch } from "../api/index.js";
+import VetoDisplay from "../components/VetoDisplay.vue";
 
 const route   = useRoute();
 const loading = ref(true);
