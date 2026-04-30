@@ -33,11 +33,11 @@
           <div class="text-center px-4 flex-shrink-0">
             <div class="text-h3 font-weight-black d-flex align-center gap-2">
               <span :class="match.winner_id === match.team1_id ? 'text-success' : match.winner_id ? 'text-error' : ''">
-                {{ match.team1_series_score ?? match.team1_score ?? 0 }}
+                {{ headerScore.t1 }}
               </span>
               <span class="text-medium-emphasis text-h4">:</span>
               <span :class="match.winner_id === match.team2_id ? 'text-success' : match.winner_id ? 'text-error' : ''">
-                {{ match.team2_series_score ?? match.team2_score ?? 0 }}
+                {{ headerScore.t2 }}
               </span>
             </div>
           </div>
@@ -190,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getMatch } from "../api/index.js";
 
@@ -243,6 +243,16 @@ const teamsForMap = (map) => {
     return { name, players: ps, score, opponentScore };
   });
 };
+
+const headerScore = computed(() => {
+  if (match.value.max_maps === 1 && maps.value[0]) {
+    return { t1: maps.value[0].team1_score, t2: maps.value[0].team2_score };
+  }
+  return {
+    t1: match.value.team1_series_score ?? match.value.team1_score ?? 0,
+    t2: match.value.team2_series_score ?? match.value.team2_score ?? 0,
+  };
+});
 
 const ratingColor = (r) => {
   if (r >= 1.2) return "primary";

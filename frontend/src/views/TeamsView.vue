@@ -71,9 +71,9 @@
             >
               <template #title>
                 <span>{{ m.team1_name }}</span>
-                <v-chip size="x-small" :color="m.winner_id === m.team1_id ? 'success' : 'default'" class="mx-1">{{ m.team1_series_score ?? m.team1_score }}</v-chip>
+                <v-chip size="x-small" :color="m.winner_id === m.team1_id ? 'success' : 'default'" class="mx-1">{{ matchScore(m).t1 }}</v-chip>
                 <span class="text-medium-emphasis">vs</span>
-                <v-chip size="x-small" :color="m.winner_id === m.team2_id ? 'success' : 'default'" class="mx-1">{{ m.team2_series_score ?? m.team2_score }}</v-chip>
+                <v-chip size="x-small" :color="m.winner_id === m.team2_id ? 'success' : 'default'" class="mx-1">{{ matchScore(m).t2 }}</v-chip>
                 <span>{{ m.team2_name }}</span>
               </template>
             </v-list-item>
@@ -88,6 +88,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getTeams, getTeam } from "../api/index.js";
+import { matchScore } from "../utils/matchScore.js";
 
 const route = useRoute();
 const router = useRouter();

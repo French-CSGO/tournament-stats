@@ -33,7 +33,9 @@ router.get("/:id", async (req, res) => {
             m.cancelled, m.forfeit, m.max_maps,
             t1.id AS team1_id, t1.name AS team1_name, t1.logo AS team1_logo,
             t2.id AS team2_id, t2.name AS team2_name, t2.logo AS team2_logo,
-            w.id  AS winner_id
+            w.id  AS winner_id,
+            (SELECT ms.team1_score FROM map_stats ms WHERE ms.match_id = m.id ORDER BY ms.map_number ASC LIMIT 1) AS map1_team1_score,
+            (SELECT ms.team2_score FROM map_stats ms WHERE ms.match_id = m.id ORDER BY ms.map_number ASC LIMIT 1) AS map1_team2_score
      FROM \`match\` m
      LEFT JOIN team t1 ON t1.id = m.team1_id
      LEFT JOIN team t2 ON t2.id = m.team2_id

@@ -70,11 +70,11 @@
                   {{ item.team1_name }}
                 </span>
                 <v-chip class="mx-1" size="x-small" :color="winnerColor(item, 1)" variant="flat">
-                  {{ item.team1_series_score ?? item.team1_score }}
+                  {{ matchScore(item).t1 }}
                 </v-chip>
                 <span class="text-medium-emphasis">–</span>
                 <v-chip class="mx-1" size="x-small" :color="winnerColor(item, 2)" variant="flat">
-                  {{ item.team2_series_score ?? item.team2_score }}
+                  {{ matchScore(item).t2 }}
                 </v-chip>
                 <span :class="item.winner_id === item.team2_id ? 'font-weight-bold' : 'text-medium-emphasis'">
                   {{ item.team2_name }}
@@ -95,6 +95,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getSeason } from "../api/index.js";
+import { matchScore } from "../utils/matchScore.js";
 
 const route = useRoute();
 const loading = ref(true);
