@@ -9,7 +9,8 @@ const matchesRouter = require("./routes/matches");
 const teamsRouter = require("./routes/teams");
 const demosRouter = require("./routes/demos");
 const adminRouter = require("./routes/admin");
-const statsRouter = require("./routes/stats");
+const statsRouter   = require("./routes/stats");
+const playersRouter = require("./routes/players");
 
 const app = express();
 
@@ -26,7 +27,8 @@ app.use("/api/matches", matchesRouter);
 app.use("/api/teams", teamsRouter);
 app.use("/api/demos", demosRouter);
 app.use("/api/admin", adminRouter);
-app.use("/api/stats", statsRouter);
+app.use("/api/stats",   statsRouter);
+app.use("/api/players", playersRouter);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 

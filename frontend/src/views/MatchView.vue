@@ -19,22 +19,14 @@
 
         <div class="d-flex align-center justify-center gap-4 flex-wrap">
           <!-- Team 1 -->
-          <div class="d-flex align-center gap-3 flex-1" style="justify-content: flex-end">
-            <div class="text-right">
-              <div class="text-h6 font-weight-bold">{{ match.team1_name }}</div>
-              <v-chip
-                v-if="match.winner_id"
-                size="x-small"
-                :color="match.winner_id === match.team1_id ? 'success' : 'error'"
-                variant="flat"
-                class="mt-1"
-              >{{ match.winner_id === match.team1_id ? 'VICTOIRE' : 'DÉFAITE' }}</v-chip>
-            </div>
-            <v-avatar
-              :color="match.winner_id === match.team1_id ? 'success' : match.winner_id ? 'error' : 'primary'"
-              size="44"
-              class="text-body-1 font-weight-bold flex-shrink-0"
-            >{{ teamInitials(match.team1_name) }}</v-avatar>
+          <div class="d-flex flex-column align-end flex-1 gap-1">
+            <div class="text-h6 font-weight-bold">{{ match.team1_name }}</div>
+            <v-chip
+              v-if="match.winner_id"
+              size="x-small"
+              :color="match.winner_id === match.team1_id ? 'success' : 'error'"
+              variant="flat"
+            >{{ match.winner_id === match.team1_id ? 'VICTOIRE' : 'DÉFAITE' }}</v-chip>
           </div>
 
           <!-- Score -->
@@ -51,22 +43,14 @@
           </div>
 
           <!-- Team 2 -->
-          <div class="d-flex align-center gap-3 flex-1">
-            <v-avatar
-              :color="match.winner_id === match.team2_id ? 'success' : match.winner_id ? 'error' : 'primary'"
-              size="44"
-              class="text-body-1 font-weight-bold flex-shrink-0"
-            >{{ teamInitials(match.team2_name) }}</v-avatar>
-            <div>
-              <div class="text-h6 font-weight-bold">{{ match.team2_name }}</div>
-              <v-chip
-                v-if="match.winner_id"
-                size="x-small"
-                :color="match.winner_id === match.team2_id ? 'success' : 'error'"
-                variant="flat"
-                class="mt-1"
-              >{{ match.winner_id === match.team2_id ? 'VICTOIRE' : 'DÉFAITE' }}</v-chip>
-            </div>
+          <div class="d-flex flex-column align-start flex-1 gap-1">
+            <div class="text-h6 font-weight-bold">{{ match.team2_name }}</div>
+            <v-chip
+              v-if="match.winner_id"
+              size="x-small"
+              :color="match.winner_id === match.team2_id ? 'success' : 'error'"
+              variant="flat"
+            >{{ match.winner_id === match.team2_id ? 'VICTOIRE' : 'DÉFAITE' }}</v-chip>
           </div>
         </div>
       </v-card-text>
@@ -104,16 +88,26 @@
 
       <div v-for="(map, i) in maps" :key="map.id" v-show="activeMap === i">
         <!-- Map sub-header -->
-        <div class="d-flex align-center justify-space-between px-4 py-2 flex-wrap gap-2">
-          <div class="d-flex align-center gap-2 text-body-2">
-            <span class="font-weight-bold text-uppercase">{{ map.map_name }}</span>
-            <span class="text-medium-emphasis">
-              {{ match.team1_name }}
-              <strong>{{ map.team1_score }}</strong>
-              vs
-              <strong>{{ map.team2_score }}</strong>
-              {{ match.team2_name }}
-            </span>
+        <div class="d-flex align-center px-4 py-3 gap-2">
+          <!-- Team 1 + score -->
+          <div class="d-flex align-center justify-end gap-2 flex-1 text-body-2">
+            <span class="text-medium-emphasis">{{ match.team1_name }}</span>
+            <span
+              class="text-h6 font-weight-black"
+              :class="map.team1_score > map.team2_score ? 'text-success' : 'text-error'"
+            >{{ map.team1_score }}</span>
+          </div>
+          <!-- Map name -->
+          <div class="text-center px-3 flex-shrink-0">
+            <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">{{ map.map_name }}</span>
+          </div>
+          <!-- Score + Team 2 -->
+          <div class="d-flex align-center justify-start gap-2 flex-1 text-body-2">
+            <span
+              class="text-h6 font-weight-black"
+              :class="map.team2_score > map.team1_score ? 'text-success' : 'text-error'"
+            >{{ map.team2_score }}</span>
+            <span class="text-medium-emphasis">{{ match.team2_name }}</span>
           </div>
           <v-btn
             v-if="map.demoFile"
@@ -122,6 +116,7 @@
             variant="outlined"
             prepend-icon="mdi-download"
             download
+            class="flex-shrink-0"
           >Démo</v-btn>
         </div>
         <v-divider />
@@ -147,8 +142,8 @@
           >
             <template #item.name="{ item }">
               <div class="d-flex align-center gap-2">
-                <v-avatar size="22" color="primary" variant="tonal" class="text-caption flex-shrink-0">
-                  {{ item.name.charAt(0).toUpperCase() }}
+                <v-avatar size="24" class="flex-shrink-0">
+                  <v-img :src="`/api/players/${item.steam_id}/avatar`" :alt="item.name" />
                 </v-avatar>
                 <span class="text-body-2">{{ item.name }}</span>
               </div>
@@ -253,13 +248,6 @@ const teamsForMap = (map) => {
     const opponentScore = isTeam1 ? map.team2_score : map.team1_score;
     return { name, players: ps, score, opponentScore };
   });
-};
-
-const teamInitials = (name) => {
-  if (!name) return "?";
-  const letter = name.charAt(0).toUpperCase();
-  const nums   = (name.match(/\d+$/) || [""])[0];
-  return letter + (nums || name.charAt(1)?.toUpperCase() || "");
 };
 
 const ratingColor = (r) => {
