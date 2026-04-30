@@ -12,7 +12,7 @@
       :temporary="mobile"
       :width="220"
     >
-      <v-list-item title="Tournament Stats" subtitle="v0.3" class="py-4" />
+      <v-list-item title="Tournament Stats" subtitle="v0.4" class="py-4" />
       <v-divider />
       <v-list nav density="compact">
         <v-list-item prepend-icon="mdi-trophy"         title="Saisons"      to="/" exact />
@@ -54,7 +54,7 @@
           <v-icon size="15">mdi-github</v-icon>
           French-CSGO/tournament-stats
         </a>
-        <span>v0.3</span>
+        <span>v0.4</span>
       </v-footer>
     </v-main>
   </v-app>
