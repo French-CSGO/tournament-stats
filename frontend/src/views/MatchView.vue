@@ -89,35 +89,29 @@
       <div v-for="(map, i) in maps" :key="map.id" v-show="activeMap === i">
         <!-- Map sub-header -->
         <div class="d-flex align-center px-4 py-3 gap-2">
-          <!-- Team 1 + score -->
-          <div class="d-flex align-center justify-end gap-2 flex-1 text-body-2">
+          <!-- Left: map name -->
+          <div class="flex-1">
+            <span class="text-subtitle-2 font-weight-bold text-uppercase">{{ map.map_name }}</span>
+          </div>
+          <!-- Center: scores -->
+          <div class="d-flex align-center justify-center gap-2 text-body-2">
             <span class="text-medium-emphasis">{{ match.team1_name }}</span>
-            <span
-              class="text-h6 font-weight-black"
-              :class="map.team1_score > map.team2_score ? 'text-success' : 'text-error'"
-            >{{ map.team1_score }}</span>
-          </div>
-          <!-- Map name -->
-          <div class="text-center px-3 flex-shrink-0">
-            <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">{{ map.map_name }}</span>
-          </div>
-          <!-- Score + Team 2 -->
-          <div class="d-flex align-center justify-start gap-2 flex-1 text-body-2">
-            <span
-              class="text-h6 font-weight-black"
-              :class="map.team2_score > map.team1_score ? 'text-success' : 'text-error'"
-            >{{ map.team2_score }}</span>
+            <span class="text-h6 font-weight-black" :class="map.team1_score > map.team2_score ? 'text-success' : 'text-error'">{{ map.team1_score }}</span>
+            <span class="text-medium-emphasis">–</span>
+            <span class="text-h6 font-weight-black" :class="map.team2_score > map.team1_score ? 'text-success' : 'text-error'">{{ map.team2_score }}</span>
             <span class="text-medium-emphasis">{{ match.team2_name }}</span>
           </div>
-          <v-btn
-            v-if="map.demoFile"
-            :href="`/demos/${map.demoFile}`"
-            size="small"
-            variant="outlined"
-            prepend-icon="mdi-download"
-            download
-            class="flex-shrink-0"
-          >Démo</v-btn>
+          <!-- Right: demo -->
+          <div class="flex-1 d-flex justify-end">
+            <v-btn
+              v-if="map.demoFile"
+              :href="`/demos/${map.demoFile}`"
+              size="small"
+              variant="outlined"
+              prepend-icon="mdi-download"
+              download
+            >Démo</v-btn>
+          </div>
         </div>
         <v-divider />
 
