@@ -10,10 +10,7 @@ fs.mkdirSync(DEMO_DIR, { recursive: true });
 
 function authDemo(req, res, next) {
   const token = (req.headers["authorization"] || "").replace(/^Bearer\s+/i, "");
-  const expected = process.env.DEMO_UPLOAD_TOKEN;
-  console.log(`[demo] auth: received token length=${token.length} expected length=${expected?.length ?? 0} match=${token === expected}`);
-  if (token !== expected) {
-    console.warn(`[demo] auth FAILED — token mismatch`);
+  if (token !== process.env.DEMO_UPLOAD_TOKEN) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
@@ -26,27 +23,16 @@ router.post(
   express.raw({ type: "application/octet-stream", limit: "500mb" }),
   (req, res) => {
     const filename = req.headers["get5-filename"];
-    const matchId  = req.headers["get5-matchid"];
-    const mapNum   = req.headers["get5-mapnumber"];
-    const ct       = req.headers["content-type"];
-    console.log(`[demo] POST received — content-type=${ct} match=${matchId} map=${mapNum} file=${filename} body size=${req.body?.length ?? "empty"}`);
-
-    if (!filename) {
-      console.warn("[demo] missing Get5-FileName header");
-      return res.status(400).json({ error: "Missing Get5-FileName header" });
-    }
+    if (!filename) return res.status(400).json({ error: "Missing Get5-FileName header" });
 
     const safe = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, "_");
     const dest = path.join(DEMO_DIR, safe);
-    console.log(`[demo] writing to ${dest}`);
 
     fs.writeFile(dest, req.body, (err) => {
       if (err) {
         console.error("[demo] write error:", err);
         return res.status(500).json({ error: "Write failed" });
       }
-      const stats = fs.statSync(dest);
-      console.log(`[demo] saved ${safe} — ${stats.size} bytes`);
       res.json({ message: "Success", url: `${process.env.PUBLIC_URL}/demos/${safe}` });
     });
   }

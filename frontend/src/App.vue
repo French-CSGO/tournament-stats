@@ -42,6 +42,7 @@
       <v-footer
         color="surface"
         border="t"
+        app
         class="text-caption text-medium-emphasis d-flex justify-space-between flex-wrap gap-2 px-6 py-3"
       >
         <span>Iwhite67</span>
