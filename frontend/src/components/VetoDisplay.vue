@@ -40,8 +40,6 @@ const props = defineProps({
   vetos: { type: Array, default: () => [] },
 });
 
-const G5V_URL = import.meta.env.VITE_G5V_URL?.replace(/\/$/, "") ?? "";
-
 const cards = props.vetos.map(v => ({
   id: v.id,
   map: v.map,
@@ -52,8 +50,8 @@ const cards = props.vetos.map(v => ({
   side_team: v.side_team ?? null,
 }));
 
-const mapImg = (map) => `${G5V_URL}/img/maps/${map}.jpg`;
-const imgFallback = (e) => { e.target.src = `${G5V_URL}/img/maps/_unknown.jpg`; };
+const mapImg = (map) => `/img/maps/${map}.jpg`;
+const imgFallback = (e) => { e.target.src = `/img/maps/_unknown.jpg`; };
 
 const formatMapName = (map) =>
   MAP_NAMES[map] ||
