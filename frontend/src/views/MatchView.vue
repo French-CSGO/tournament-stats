@@ -88,21 +88,18 @@
 
       <div v-for="(map, i) in maps" :key="map.id" v-show="activeMap === i">
         <!-- Map sub-header -->
-        <div class="d-flex align-center px-4 py-3 gap-2">
-          <!-- Left: map name -->
-          <div class="flex-1">
+        <v-row align="center" no-gutters class="px-4 py-2">
+          <v-col cols="3">
             <span class="text-subtitle-2 font-weight-bold text-uppercase">{{ map.map_name }}</span>
-          </div>
-          <!-- Center: scores -->
-          <div class="d-flex align-center justify-center gap-2 text-body-2">
-            <span class="text-medium-emphasis">{{ match.team1_name }}</span>
+          </v-col>
+          <v-col cols="6" class="text-center">
+            <span class="text-body-2 text-medium-emphasis mr-2">{{ match.team1_name }}</span>
             <span class="text-h6 font-weight-black" :class="map.team1_score > map.team2_score ? 'text-success' : 'text-error'">{{ map.team1_score }}</span>
-            <span class="text-medium-emphasis">–</span>
+            <span class="text-medium-emphasis mx-2">–</span>
             <span class="text-h6 font-weight-black" :class="map.team2_score > map.team1_score ? 'text-success' : 'text-error'">{{ map.team2_score }}</span>
-            <span class="text-medium-emphasis">{{ match.team2_name }}</span>
-          </div>
-          <!-- Right: demo -->
-          <div class="flex-1 d-flex justify-end">
+            <span class="text-body-2 text-medium-emphasis ml-2">{{ match.team2_name }}</span>
+          </v-col>
+          <v-col cols="3" class="text-right">
             <v-btn
               v-if="map.demoFile"
               :href="`/demos/${map.demoFile}`"
@@ -111,8 +108,8 @@
               prepend-icon="mdi-download"
               download
             >Démo</v-btn>
-          </div>
-        </div>
+          </v-col>
+        </v-row>
         <v-divider />
 
         <!-- Teams -->
