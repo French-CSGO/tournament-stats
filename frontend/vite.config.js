@@ -2,12 +2,15 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vuetify from "vite-plugin-vuetify";
 
+const backendPort = process.env.BACKEND_PORT || process.env.PORT || 3001;
+const backendUrl  = `http://localhost:${backendPort}`;
+
 export default defineConfig({
   plugins: [vue(), vuetify({ autoImport: true })],
   server: {
     proxy: {
-      "/api": "http://localhost:3001",
-      "/demos": "http://localhost:3001",
+      "/api":   backendUrl,
+      "/demos": backendUrl,
     },
   },
 });
