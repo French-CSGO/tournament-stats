@@ -4,117 +4,65 @@ const db = require("../db");
 const router = Router();
 
 // GET /api/rounds/:map_id
-// Returns rounds derived from player_stat_extras with kills per round.
-// Winner is inferred from which side lost 5 players.
+// Returns rounds from map_round (populated by G5API on round_end events),
+// enriched with kills from player_stat_extras.
 router.get("/:map_id", async (req, res) => {
   const { map_id } = req.params;
 
-  // Fetch map info needed to map CT/T sides to team IDs
-  const [[mapInfo]] = await db.query(
-    `SELECT ms.team1_first_side,
+  // Fetch rounds from map_round (source of truth for winner/score)
+  const [rounds] = await db.query(
+    `SELECT r.round_number, r.winner_team, r.winner_side,
+            r.reason, r.t1_score, r.t2_score, r.team1_side,
             m.team1_id, m.team2_id
-     FROM map_stats ms
-     JOIN \`match\` m ON m.id = ms.match_id
-     WHERE ms.id = ?`,
+     FROM map_round r
+     JOIN map_stats  ms ON ms.id        = r.map_stats_id
+     JOIN \`match\`  m  ON m.id         = ms.match_id
+     WHERE r.map_stats_id = ?
+     ORDER BY r.round_number ASC`,
     [map_id]
   );
 
-  if (!mapInfo) return res.status(404).json({ error: "Map not found" });
+  if (!rounds.length) return res.json([]);
 
-  // All kill/death events for this map, ordered by round then time
-  const [rows] = await db.query(
+  // Fetch kills for these rounds from player_stat_extras
+  const [kills] = await db.query(
     `SELECT round_number, round_time,
             attacker_name, attacker_side,
             player_name,  player_side,
-            weapon, headshot, bomb, suicide, friendly_fire
+            weapon, headshot, suicide, friendly_fire
      FROM player_stat_extras
-     WHERE map_id = ?
+     WHERE map_id = ? AND suicide = 0
      ORDER BY round_number, round_time`,
     [map_id]
   );
 
-  if (!rows.length) return res.json([]);
-
-  // Group by round
-  const byRound = {};
-  for (const row of rows) {
-    const rn = row.round_number;
-    if (!byRound[rn]) byRound[rn] = { ctDeaths: 0, tDeaths: 0, bombExploded: false, kills: [] };
-    const r = byRound[rn];
-
-    // bomb=1 on a CT victim means the bomb exploded → T wins this round
-    if (row.bomb && row.player_side === "CT") r.bombExploded = true;
-
-    // Count side deaths for winner inference (exclude suicides and TKs)
-    if (!row.suicide && !row.friendly_fire) {
-      if (row.player_side === "CT") r.ctDeaths++;
-      else if (row.player_side === "T") r.tDeaths++;
-    }
-
-    // Only include non-suicide kills in the feed
-    if (!row.suicide) {
-      r.kills.push({
-        killer_name:   row.attacker_name,
-        victim_name:   row.player_name,
-        killer_side:   row.attacker_side,
-        victim_side:   row.player_side,
-        weapon:        row.weapon,
-        headshot:      !!row.headshot,
-        friendly_fire: !!row.friendly_fire
-      });
-    }
+  // Index kills by round_number
+  const killsByRound = {};
+  for (const k of kills) {
+    if (!killsByRound[k.round_number]) killsByRound[k.round_number] = [];
+    killsByRound[k.round_number].push({
+      killer_name:   k.attacker_name,
+      victim_name:   k.player_name,
+      killer_side:   k.attacker_side,
+      victim_side:   k.player_side,
+      weapon:        k.weapon,
+      headshot:      !!k.headshot,
+      friendly_fire: !!k.friendly_fire
+    });
   }
 
-  const team1FirstSide = (mapInfo.team1_first_side || "ct").toUpperCase();
+  const { team1_id, team2_id } = rounds[0];
 
-  // Determine which side team1 is on for a given round number
-  function team1SideForRound(roundNum) {
-    if (roundNum <= 12) return team1FirstSide;
-    if (roundNum <= 24) return team1FirstSide === "CT" ? "T" : "CT";
-    // Overtime: 3-round halves, sides swap every 3 rounds starting at round 25
-    const otRound = roundNum - 25;
-    const otHalf  = Math.floor(otRound / 3) % 2;
-    const otStart = team1FirstSide === "CT" ? "T" : "CT";
-    return otHalf === 0 ? otStart : (otStart === "CT" ? "T" : "CT");
-  }
-
-  // Build sorted round list with inferred winner and cumulative score
-  const roundNums = Object.keys(byRound).map(Number).sort((a, b) => a - b);
-  let t1Score = 0;
-  let t2Score = 0;
-
-  const result = roundNums.map(rn => {
-    const r = byRound[rn];
-
-    // Infer winning side:
-    // 1. Bomb exploded → T wins (even if some CTs survived)
-    // 2. All 5 CT dead → T wins by elimination
-    // 3. All 5 T dead  → CT wins by elimination
-    // Rounds ending by time-out or defuse with survivors remain null
-    let winningSide = null;
-    if (r.bombExploded || r.ctDeaths >= 5) winningSide = "T";
-    else if (r.tDeaths >= 5)               winningSide = "CT";
-
-    // Map winning side → team ID
-    let winner_team_id = null;
-    if (winningSide) {
-      const t1Side = team1SideForRound(rn);
-      winner_team_id = winningSide === t1Side
-        ? mapInfo.team1_id
-        : mapInfo.team2_id;
-    }
-
-    if (winner_team_id === mapInfo.team1_id) t1Score++;
-    else if (winner_team_id === mapInfo.team2_id) t2Score++;
-
-    return {
-      round_num:       rn,
-      winner_team_id,
-      t1_score_after:  t1Score,
-      t2_score_after:  t2Score,
-      kills:           r.kills
-    };
-  });
+  const result = rounds.map(r => ({
+    round_num:      r.round_number,
+    winner_team_id: r.winner_team === "team1" ? team1_id : team2_id,
+    winner_side:    r.winner_side,
+    reason:         r.reason,
+    t1_score_after: r.t1_score,
+    t2_score_after: r.t2_score,
+    team1_side:     r.team1_side,
+    kills:          killsByRound[r.round_number] || []
+  }));
 
   res.json(result);
 });
