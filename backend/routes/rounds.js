@@ -21,7 +21,7 @@ router.get("/:map_id", async (req, res) => {
 
   if (!mapInfo) return res.status(404).json({ error: "Map not found" });
 
-  // All kill events for this map, ordered by round then time
+  // All kill/death events for this map, ordered by round then time
   const [rows] = await db.query(
     `SELECT round_number, round_time,
             attacker_name, attacker_side,
@@ -39,24 +39,27 @@ router.get("/:map_id", async (req, res) => {
   const byRound = {};
   for (const row of rows) {
     const rn = row.round_number;
-    if (!byRound[rn]) byRound[rn] = { ctDeaths: 0, tDeaths: 0, kills: [] };
+    if (!byRound[rn]) byRound[rn] = { ctDeaths: 0, tDeaths: 0, bombExploded: false, kills: [] };
     const r = byRound[rn];
 
-    // Count side deaths for winner inference (exclude team kills and suicides from death count)
+    // bomb=1 on a CT victim means the bomb exploded → T wins this round
+    if (row.bomb && row.player_side === "CT") r.bombExploded = true;
+
+    // Count side deaths for winner inference (exclude suicides and TKs)
     if (!row.suicide && !row.friendly_fire) {
       if (row.player_side === "CT") r.ctDeaths++;
-      else if (row.player_side === "T")  r.tDeaths++;
+      else if (row.player_side === "T") r.tDeaths++;
     }
 
     // Only include non-suicide kills in the feed
     if (!row.suicide) {
       r.kills.push({
-        killer_name:  row.attacker_name,
-        victim_name:  row.player_name,
-        killer_side:  row.attacker_side,
-        victim_side:  row.player_side,
-        weapon:       row.weapon,
-        headshot:     !!row.headshot,
+        killer_name:   row.attacker_name,
+        victim_name:   row.player_name,
+        killer_side:   row.attacker_side,
+        victim_side:   row.player_side,
+        weapon:        row.weapon,
+        headshot:      !!row.headshot,
         friendly_fire: !!row.friendly_fire
       });
     }
@@ -83,10 +86,14 @@ router.get("/:map_id", async (req, res) => {
   const result = roundNums.map(rn => {
     const r = byRound[rn];
 
-    // Infer winning side from death counts (≥5 deaths on a side = that side lost)
+    // Infer winning side:
+    // 1. Bomb exploded → T wins (even if some CTs survived)
+    // 2. All 5 CT dead → T wins by elimination
+    // 3. All 5 T dead  → CT wins by elimination
+    // Rounds ending by time-out or defuse with survivors remain null
     let winningSide = null;
-    if (r.ctDeaths >= 5) winningSide = "T";
-    if (r.tDeaths  >= 5) winningSide = "CT";
+    if (r.bombExploded || r.ctDeaths >= 5) winningSide = "T";
+    else if (r.tDeaths >= 5)               winningSide = "CT";
 
     // Map winning side → team ID
     let winner_team_id = null;
