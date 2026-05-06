@@ -65,7 +65,8 @@ router.get("/", async (req, res) => {
           SUM(ps.damage)         AS damage,
           SUM(ps.roundsplayed)   AS rounds,
           COUNT(DISTINCT ms.id)  AS maps,
-          SUM(ps.k1) AS k1, SUM(ps.k2) AS k2, SUM(ps.k3) AS k3,
+          GREATEST(0, SUM(ps.roundsplayed) - SUM(ps.k2) - SUM(ps.k3) - SUM(ps.k4) - SUM(ps.k5)) AS k1,
+          SUM(ps.k2) AS k2, SUM(ps.k3) AS k3,
           SUM(ps.k4) AS k4, SUM(ps.k5) AS k5
         FROM player_stats ps
         JOIN map_stats ms ON ms.id = ps.map_id
