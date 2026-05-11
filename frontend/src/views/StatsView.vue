@@ -143,17 +143,14 @@ onMounted(async () => {
   await load();
 });
 
-const playersFiltered = computed(() => {
+const playersSortedWithRank = computed(() => {
+  const sorted = applySort(data.value.players, playerSortBy.value);
+  const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
   const q = playerSearch.value?.toLowerCase().trim();
-  if (!q) return data.value.players;
-  return data.value.players.filter(
+  if (!q) return ranked;
+  return ranked.filter(
     (p) => p.name?.toLowerCase().includes(q) || p.steam_id?.toString().includes(q)
   );
-});
-
-const playersSortedWithRank = computed(() => {
-  const sorted = applySort(playersFiltered.value, playerSortBy.value);
-  return sorted.map((p, i) => ({ ...p, rank: i + 1 }));
 });
 
 const kpiCards = computed(() => [

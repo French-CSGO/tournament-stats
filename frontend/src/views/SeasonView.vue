@@ -149,17 +149,14 @@ const playersComputed = computed(() =>
   }))
 );
 
-const playersFiltered = computed(() => {
+const playersWithRank = computed(() => {
+  const sorted = applySort(playersComputed.value, playerSortBy.value);
+  const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
   const q = playerSearch.value?.toLowerCase().trim();
-  if (!q) return playersComputed.value;
-  return playersComputed.value.filter(
+  if (!q) return ranked;
+  return ranked.filter(
     (p) => p.name?.toLowerCase().includes(q) || p.steam_id?.toString().includes(q)
   );
-});
-
-const playersWithRank = computed(() => {
-  const sorted = applySort(playersFiltered.value, playerSortBy.value);
-  return sorted.map((p, i) => ({ ...p, rank: i + 1 }));
 });
 
 const matchesFiltered = computed(() => {
