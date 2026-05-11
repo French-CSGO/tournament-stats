@@ -101,6 +101,21 @@
         </v-row>
         <v-divider />
 
+        <!-- Round timeline -->
+        <div class="px-4 py-3">
+          <div v-if="mapRoundsLoading[map.id]" class="d-flex align-center gap-2">
+            <v-progress-circular indeterminate size="16" width="2" />
+            <span class="text-caption text-medium-emphasis">Chargement des rounds…</span>
+          </div>
+          <RoundTimeline
+            v-else
+            :rounds="mapRounds[map.id] || []"
+            :team1-id="match.team1_id"
+            :team2-id="match.team2_id"
+          />
+        </div>
+        <v-divider />
+
         <!-- Teams -->
         <template v-for="team in teamsForMap(map)" :key="team.name">
           <div class="d-flex align-center gap-2 px-4 py-2 bg-surface-variant">
@@ -178,8 +193,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { getMatch } from "../api/index.js";
+import { getMatch, getMapRounds } from "../api/index.js";
 import VetoDisplay from "../components/VetoDisplay.vue";
+import RoundTimeline from "../components/RoundTimeline.vue";
 
 const route   = useRoute();
 const loading = ref(true);
@@ -187,6 +203,8 @@ const match   = ref({});
 const maps    = ref([]);
 const vetos   = ref([]);
 const activeMap = ref(0);
+const mapRounds        = ref({});
+const mapRoundsLoading = ref({});
 
 onMounted(async () => {
   const { data } = await getMatch(route.params.id);
@@ -194,6 +212,19 @@ onMounted(async () => {
   maps.value  = data.maps;
   vetos.value = data.vetos;
   loading.value = false;
+
+  // Load round history for each map (non-blocking)
+  for (const m of data.maps) {
+    mapRoundsLoading.value[m.id] = true;
+    try {
+      const { data: rounds } = await getMapRounds(m.id);
+      mapRounds.value[m.id] = rounds;
+    } catch {
+      mapRounds.value[m.id] = [];
+    } finally {
+      mapRoundsLoading.value[m.id] = false;
+    }
+  }
 });
 
 const playerHeaders = [

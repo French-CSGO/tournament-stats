@@ -11,6 +11,7 @@ const demosRouter = require("./routes/demos");
 const adminRouter = require("./routes/admin");
 const statsRouter   = require("./routes/stats");
 const playersRouter = require("./routes/players");
+const roundsRouter  = require("./routes/rounds");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/demos", demosRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/stats",   statsRouter);
 app.use("/api/players", playersRouter);
+app.use("/api/rounds",  roundsRouter);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 

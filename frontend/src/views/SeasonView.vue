@@ -25,12 +25,12 @@
             />
           </div>
           <v-data-table
+            v-model:sort-by="playerSortBy"
             :headers="playerHeaders"
-            :items="playersFiltered"
+            :items="playersWithRank"
             item-value="steam_id"
             :items-per-page="20"
             density="compact"
-            :sort-by="[{ key: 'rating', order: 'desc' }]"
           >
             <template #item.rating="{ item }">
               <span :class="ratingColor(item.rating)">{{ item.rating }}</span>
@@ -102,6 +102,19 @@ const loading = ref(true);
 const data = ref({ season: {}, matches: [], players: [] });
 const playerSearch = ref("");
 const matchSearch  = ref("");
+const playerSortBy = ref([{ key: "rating", order: "desc" }]);
+
+function applySort(items, sortBy) {
+  if (!sortBy.length) return items;
+  const { key, order } = sortBy[0];
+  return [...items].sort((a, b) => {
+    const va = a[key], vb = b[key];
+    const cmp = typeof va === "number" && typeof vb === "number"
+      ? va - vb
+      : String(va ?? "").localeCompare(String(vb ?? ""));
+    return order === "desc" ? -cmp : cmp;
+  });
+}
 
 onMounted(async () => {
   const { data: d } = await getSeason(route.params.id);
@@ -115,6 +128,7 @@ const matchHeaders = [
 ];
 
 const playerHeaders = [
+  { title: "#",      key: "rank",        sortable: false },
   { title: "Joueur", key: "name",        sortable: true },
   { title: "Rating", key: "rating",      sortable: true },
   { title: "K",      key: "kills",       sortable: true },
@@ -135,10 +149,12 @@ const playersComputed = computed(() =>
   }))
 );
 
-const playersFiltered = computed(() => {
+const playersWithRank = computed(() => {
+  const sorted = applySort(playersComputed.value, playerSortBy.value);
+  const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
   const q = playerSearch.value?.toLowerCase().trim();
-  if (!q) return playersComputed.value;
-  return playersComputed.value.filter(
+  if (!q) return ranked;
+  return ranked.filter(
     (p) => p.name?.toLowerCase().includes(q) || p.steam_id?.toString().includes(q)
   );
 });
