@@ -48,11 +48,11 @@
               />
             </div>
             <v-data-table
+              v-model:sort-by="playerSortBy"
               :headers="playerHeaders"
-              :items="playersFiltered"
+              :items="playersSortedWithRank"
               density="compact"
               :items-per-page="20"
-              :sort-by="[{ key: 'rating', order: 'desc' }]"
             >
               <template #item.rating="{ item }">
                 <span :class="ratingColor(item.rating)">{{ item.rating }}</span>
@@ -103,6 +103,19 @@ const selectedSeason = ref(route.params.id ? parseInt(route.params.id) : null);
 const seasons = ref([]);
 const data = ref({ kpis: {}, players: [], mapStats: [], weaponData: [] });
 const playerSearch = ref("");
+const playerSortBy = ref([{ key: "rating", order: "desc" }]);
+
+function applySort(items, sortBy) {
+  if (!sortBy.length) return items;
+  const { key, order } = sortBy[0];
+  return [...items].sort((a, b) => {
+    const va = a[key], vb = b[key];
+    const cmp = typeof va === "number" && typeof vb === "number"
+      ? va - vb
+      : String(va ?? "").localeCompare(String(vb ?? ""));
+    return order === "desc" ? -cmp : cmp;
+  });
+}
 
 const seasonId   = computed(() => selectedSeason.value);
 const seasonName = computed(() => seasons.value.find(s => s.id === seasonId.value)?.name || "");
@@ -136,6 +149,11 @@ const playersFiltered = computed(() => {
   return data.value.players.filter(
     (p) => p.name?.toLowerCase().includes(q) || p.steam_id?.toString().includes(q)
   );
+});
+
+const playersSortedWithRank = computed(() => {
+  const sorted = applySort(playersFiltered.value, playerSortBy.value);
+  return sorted.map((p, i) => ({ ...p, rank: i + 1 }));
 });
 
 const kpiCards = computed(() => [
@@ -195,6 +213,7 @@ const doughnutOptions = {
 };
 
 const playerHeaders = [
+  { title: "#",        key: "rank",    sortable: false },
   { title: "Joueur",   key: "name",    sortable: true },
   { title: "Équipe",   key: "team",    sortable: true },
   { title: "Rating",   key: "rating",  sortable: true },
