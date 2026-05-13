@@ -23,9 +23,6 @@ router.get("/season/:id", async (req, res) => {
 
 // GET /api/tournaments/:slug — fetch bracket data from Challonge (cached 30 min)
 router.get("/:slug", async (req, res) => {
-  if (!process.env.CHALLONGE_API_KEY) {
-    return res.status(503).json({ error: "CHALLONGE_API_KEY non configuré" });
-  }
   try {
     const data = await fetchTournament(req.params.slug);
     res.json(data);
