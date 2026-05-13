@@ -5,6 +5,7 @@ const { fetchTournament, clearCache } = require("../utils/challonge");
 const router = Router();
 
 // GET /api/tournaments/season/:id — list tournaments linked to a season
+// Fallback: if no rows in season_challonge_tournament, use season.challonge_url
 router.get("/season/:id", async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -14,7 +15,18 @@ router.get("/season/:id", async (req, res) => {
        ORDER BY display_order, id`,
       [req.params.id]
     );
-    res.json(rows);
+
+    if (rows.length > 0) return res.json(rows);
+
+    const [[season]] = await db.query(
+      `SELECT challonge_url FROM season WHERE id = ? AND is_challonge = 1 AND challonge_url IS NOT NULL AND challonge_url != ''`,
+      [req.params.id]
+    );
+    if (season?.challonge_url) {
+      return res.json([{ id: null, season_id: req.params.id, challonge_slug: season.challonge_url, label: "Main" }]);
+    }
+
+    res.json([]);
   } catch (err) {
     console.error("[tournaments]", err.message);
     res.status(500).json({ error: "DB error" });

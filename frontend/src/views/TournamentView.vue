@@ -92,26 +92,22 @@
                     color="surface"
                   >
                     <template #text>
-                      <div
-                        v-for="m in round"
-                        :key="m.id"
-                        class="d-flex align-center justify-space-between py-1 match-row"
-                      >
-                        <span
-                          :class="m.winner_id === m.player1_id ? 'font-weight-bold' : 'text-medium-emphasis'"
-                          class="text-body-2 flex-1 text-right pr-2"
-                        >{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
-                        <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="mx-1">
-                          {{ scoreP1(m) }}
-                        </v-chip>
-                        <span class="text-caption text-medium-emphasis mx-1">–</span>
-                        <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="mx-1">
-                          {{ scoreP2(m) }}
-                        </v-chip>
-                        <span
-                          :class="m.winner_id === m.player2_id ? 'font-weight-bold' : 'text-medium-emphasis'"
-                          class="text-body-2 flex-1 pl-2"
-                        >{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
+                      <div class="round-matches-grid">
+                        <div
+                          v-for="m in round"
+                          :key="m.id"
+                          class="match-card"
+                        >
+                          <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
+                            <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
+                            <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
+                          </div>
+                          <div class="match-sep" />
+                          <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
+                            <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
+                            <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
+                          </div>
+                        </div>
                       </div>
                     </template>
                   </v-expansion-panel>
@@ -286,10 +282,45 @@ const chipColor = (m, side) => {
 </script>
 
 <style scoped>
-.match-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+.round-matches-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 4px 0;
 }
-.match-row:last-child {
-  border-bottom: none;
+@media (max-width: 600px) {
+  .round-matches-grid { grid-template-columns: 1fr; }
+}
+
+.match-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #252e3d;
+}
+.match-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+}
+.match-side.loser .match-name {
+  opacity: 0.45;
+}
+.match-side.winner .match-name {
+  font-weight: 600;
+}
+.match-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.match-score {
+  flex-shrink: 0;
+}
+.match-sep {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
 }
 </style>

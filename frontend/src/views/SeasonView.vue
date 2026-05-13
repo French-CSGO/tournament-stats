@@ -6,6 +6,14 @@
       <h1 class="text-h5">{{ data.season.name }}</h1>
       <v-spacer />
       <v-btn prepend-icon="mdi-chart-bar" variant="tonal" size="small" :to="`/stats/season/${route.params.id}`">Stats détaillées</v-btn>
+      <v-btn
+        v-if="challongeTournaments.length"
+        prepend-icon="mdi-tournament"
+        variant="tonal"
+        size="small"
+        color="primary"
+        :to="`/season/${route.params.id}/tournaments`"
+      >Tournois</v-btn>
     </div>
 
     <v-row>
