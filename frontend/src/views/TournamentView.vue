@@ -84,36 +84,34 @@
             <v-col cols="12" md="7">
               <v-card color="surface">
                 <v-card-title class="text-subtitle-1">Rounds</v-card-title>
-                <v-expansion-panels variant="accordion" flat>
-                  <v-expansion-panel
-                    v-for="(round, ri) in swissRounds"
-                    :key="ri"
-                    :title="`Round ${ri + 1}`"
-                    color="surface"
-                  >
-                    <template #text>
-                      <div class="round-matches-scroll">
-                        <div class="round-matches-grid" :style="{ gridTemplateColumns: `repeat(${Math.ceil(round.length / 2)}, 220px)` }">
-                          <div
-                            v-for="m in round"
-                            :key="m.id"
-                            class="match-card"
-                          >
-                          <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
-                            <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
-                            <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
-                          </div>
-                          <div class="match-sep" />
-                          <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
-                            <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
-                            <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
-                          </div>
-                          </div>
+                <div
+                  v-for="(round, ri) in swissRounds"
+                  :key="ri"
+                  class="swiss-round"
+                >
+                  <button class="swiss-round-header" @click="toggleRound(ri)">
+                    <span>Round {{ ri + 1 }}</span>
+                    <v-icon size="18">{{ openRounds.has(ri) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                  </button>
+                  <div v-if="openRounds.has(ri)" class="swiss-round-body">
+                    <div
+                      class="round-matches-grid"
+                      :style="{ gridTemplateColumns: `repeat(${Math.ceil(round.length / 2)}, 220px)` }"
+                    >
+                      <div v-for="m in round" :key="m.id" class="match-card">
+                        <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
+                          <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
+                          <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
+                        </div>
+                        <div class="match-sep" />
+                        <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
+                          <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
+                          <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
                         </div>
                       </div>
-                    </template>
-                  </v-expansion-panel>
-                </v-expansion-panels>
+                    </div>
+                  </div>
+                </div>
               </v-card>
             </v-col>
           </v-row>
@@ -137,6 +135,13 @@ const seasonName       = ref("");
 const tournaments      = ref([]);
 const activeTournament = ref(null);
 const bracketData      = ref({});
+const openRounds       = ref(new Set());
+
+function toggleRound(ri) {
+  const s = new Set(openRounds.value);
+  s.has(ri) ? s.delete(ri) : s.add(ri);
+  openRounds.value = s;
+}
 
 // ─── type helpers ──────────────────────────────────────────────────────────────
 
@@ -197,7 +202,15 @@ onMounted(async () => {
 });
 
 watch(activeTournament, async (slug) => {
-  if (slug) await loadTournamentData(slug);
+  if (slug) {
+    await loadTournamentData(slug);
+    // open last round by default
+    const data = bracketData.value[slug];
+    if (data?.matches?.length) {
+      const maxRound = Math.max(...data.matches.map((m) => m.round));
+      openRounds.value = new Set([maxRound - 1]);
+    }
+  }
 });
 
 // ─── current tournament ───────────────────────────────────────────────────────
@@ -286,21 +299,38 @@ const chipColor = (m, side) => {
 </script>
 
 <style scoped>
-/* Vuetify locks overflow on expansion panel text — unlock it */
-:deep(.v-expansion-panel-text__wrapper) {
-  overflow-x: auto !important;
+.swiss-round {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
-
-.round-matches-scroll {
-  width: max-content;
-  min-width: 100%;
+.swiss-round:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.swiss-round-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+}
+.swiss-round-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.swiss-round-body {
+  overflow-x: auto;
+  padding: 12px 16px;
 }
 .round-matches-grid {
   display: grid;
   grid-template-rows: repeat(2, auto);
   grid-auto-flow: row;
   gap: 8px;
-  padding: 4px 0;
 }
 
 .match-card {
