@@ -1,9 +1,54 @@
 <template>
-  <div :id="containerId" class="brackets-viewer" />
+  <div>
+    <div :id="containerId" class="brackets-viewer" />
+
+    <v-dialog v-model="dialog" max-width="360">
+      <v-card color="surface" rounded="lg">
+        <v-card-title class="text-body-1 pt-4 pb-2 px-4">
+          Détails du match
+        </v-card-title>
+        <v-card-text class="px-4 pb-3">
+          <div v-if="matchLoading" class="text-center py-4">
+            <v-progress-circular indeterminate size="28" />
+          </div>
+          <div v-else-if="matchData" class="d-flex align-center justify-center gap-3">
+            <span :class="matchData.winner_id === null ? '' : (matchData.team1_score > matchData.team2_score ? 'font-weight-bold' : 'text-medium-emphasis')" class="text-body-2 text-right" style="flex:1">
+              {{ matchData.team1_name }}
+            </span>
+            <div class="d-flex align-center gap-1">
+              <v-chip size="small" :color="matchData.team1_score > matchData.team2_score ? 'success' : 'default'" variant="flat">
+                {{ matchData.team1_score }}
+              </v-chip>
+              <span class="text-caption text-medium-emphasis">–</span>
+              <v-chip size="small" :color="matchData.team2_score > matchData.team1_score ? 'success' : 'default'" variant="flat">
+                {{ matchData.team2_score }}
+              </v-chip>
+            </div>
+            <span :class="matchData.winner_id === null ? '' : (matchData.team2_score > matchData.team1_score ? 'font-weight-bold' : 'text-medium-emphasis')" class="text-body-2 text-left" style="flex:1">
+              {{ matchData.team2_name }}
+            </span>
+          </div>
+          <div v-else class="text-caption text-medium-emphasis text-center py-2">
+            Aucun match G5 lié à ce match Challonge.
+          </div>
+        </v-card-text>
+        <v-card-actions v-if="matchData" class="px-4 pb-4 pt-0">
+          <v-spacer />
+          <v-btn
+            :to="`/match/${matchData.id}`"
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-chart-bar"
+            @click="dialog = false"
+          >Voir le match</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup>
-import { onMounted, watch } from "vue";
+import { onMounted, watch, ref } from "vue";
 import "brackets-viewer";
 import "brackets-viewer/dist/brackets-viewer.min.css";
 
@@ -12,6 +57,32 @@ const props = defineProps({
 });
 
 const containerId = `bv-${Math.random().toString(36).slice(2)}`;
+
+const dialog      = ref(false);
+const matchLoading = ref(false);
+const matchData   = ref(null);
+
+async function openMatch(challongeId) {
+  dialog.value = true;
+  matchLoading.value = true;
+  matchData.value = null;
+  try {
+    const res = await fetch(`/api/matches/challonge/${challongeId}`);
+    matchData.value = res.ok ? await res.json() : null;
+  } catch {
+    matchData.value = null;
+  }
+  matchLoading.value = false;
+}
+
+function attachClickListeners() {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll(".match[data-match-id]").forEach((el) => {
+    el.style.cursor = "pointer";
+    el.addEventListener("click", () => openMatch(el.dataset.matchId), { once: false });
+  });
+}
 
 async function render() {
   if (!props.data) return;
@@ -24,6 +95,7 @@ async function render() {
     showRankingTable:            true,
     clear:                       true,
   });
+  attachClickListeners();
 }
 
 onMounted(render);
