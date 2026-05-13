@@ -112,4 +112,33 @@ watch(() => props.data, render, { deep: true });
 .brackets-viewer .connector {
   border-color: var(--connector-color) !important;
 }
+
+/* Round Robin: matches in 2-row columns (N matches → ceil(N/2) cols × 2 rows) */
+.brackets-viewer .round-robin section.group,
+.brackets-viewer .round-robin article.round {
+  overflow: visible !important;
+}
+
+.brackets-viewer .round-robin article.round {
+  position: relative !important;
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: var(--match-width) !important;
+  gap: 6px !important;
+  padding-top: 26px !important;
+  margin-bottom: 20px !important;
+}
+
+.brackets-viewer .round-robin article.round > h3 {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  color: #9ca3af !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
 </style>
