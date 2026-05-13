@@ -286,12 +286,12 @@ const chipColor = (m, side) => {
 <style scoped>
 .round-matches-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: 220px;
   gap: 8px;
   padding: 4px 0;
-}
-@media (max-width: 600px) {
-  .round-matches-grid { grid-template-columns: 1fr; }
+  overflow-x: auto;
 }
 
 .match-card {
