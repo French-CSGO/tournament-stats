@@ -92,12 +92,13 @@
                     color="surface"
                   >
                     <template #text>
-                      <div class="round-matches-grid">
-                        <div
-                          v-for="m in round"
-                          :key="m.id"
-                          class="match-card"
-                        >
+                      <div class="round-matches-scroll">
+                        <div class="round-matches-grid" :style="{ gridTemplateColumns: `repeat(${Math.ceil(round.length / 2)}, 220px)` }">
+                          <div
+                            v-for="m in round"
+                            :key="m.id"
+                            class="match-card"
+                          >
                           <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
                             <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
                             <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
@@ -106,6 +107,7 @@
                           <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
                             <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
                             <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
+                          </div>
                           </div>
                         </div>
                       </div>
@@ -284,14 +286,17 @@ const chipColor = (m, side) => {
 </script>
 
 <style scoped>
+.round-matches-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
 .round-matches-grid {
   display: grid;
   grid-template-rows: repeat(2, auto);
-  grid-auto-flow: column;
-  grid-auto-columns: 220px;
+  grid-auto-flow: row;
   gap: 8px;
   padding: 4px 0;
-  overflow-x: auto;
+  width: max-content;
 }
 
 .match-card {
