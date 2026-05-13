@@ -185,8 +185,17 @@ watch(() => props.data, render, { deep: true });
   border-color: var(--connector-color) !important;
 }
 
+/* Round Robin: ranking table above rounds */
+.brackets-viewer .round-robin section.group {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: visible !important;
+}
+.brackets-viewer .round-robin section.group > h2   { order: -3 !important; }
+.brackets-viewer .round-robin section.group > table { order: -2 !important; margin-bottom: 20px !important; }
+.brackets-viewer .round-robin section.group > article.round { order: 0 !important; }
+
 /* Round Robin: matches in 2-row columns (N matches → ceil(N/2) cols × 2 rows) */
-.brackets-viewer .round-robin section.group,
 .brackets-viewer .round-robin article.round {
   overflow: visible !important;
 }
