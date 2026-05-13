@@ -125,6 +125,7 @@ watch(() => props.data, render, { deep: true });
   grid-template-rows: auto auto !important;
   grid-auto-flow: column !important;
   grid-auto-columns: var(--match-width) !important;
+  width: 100% !important;
   gap: 6px !important;
   padding-top: 26px !important;
   margin-bottom: 20px !important;
