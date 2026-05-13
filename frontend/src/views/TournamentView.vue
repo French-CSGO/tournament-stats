@@ -286,9 +286,14 @@ const chipColor = (m, side) => {
 </script>
 
 <style scoped>
+/* Vuetify locks overflow on expansion panel text — unlock it */
+:deep(.v-expansion-panel-text__wrapper) {
+  overflow-x: auto !important;
+}
+
 .round-matches-scroll {
-  overflow-x: auto;
-  padding-bottom: 4px;
+  width: max-content;
+  min-width: 100%;
 }
 .round-matches-grid {
   display: grid;
@@ -296,7 +301,6 @@ const chipColor = (m, side) => {
   grid-auto-flow: row;
   gap: 8px;
   padding: 4px 0;
-  width: max-content;
 }
 
 .match-card {
