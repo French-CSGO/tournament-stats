@@ -94,19 +94,18 @@
                     <v-icon size="18">{{ openRounds.has(ri) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
                   </button>
                   <div v-if="openRounds.has(ri)" class="swiss-round-body">
-                    <div
-                      class="round-matches-grid"
-                      :style="{ gridTemplateColumns: `repeat(${Math.ceil(round.length / 2)}, 220px)` }"
-                    >
-                      <div v-for="m in round" :key="m.id" class="match-card">
-                        <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
-                          <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
-                          <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
-                        </div>
-                        <div class="match-sep" />
-                        <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
-                          <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
-                          <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
+                    <div class="round-cols">
+                      <div v-for="(col, ci) in toColumns(round)" :key="ci" class="round-col">
+                        <div v-for="m in col" :key="m.id" class="match-card">
+                          <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
+                            <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
+                            <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
+                          </div>
+                          <div class="match-sep" />
+                          <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
+                            <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
+                            <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -141,6 +140,15 @@ function toggleRound(ri) {
   const s = new Set(openRounds.value);
   s.has(ri) ? s.delete(ri) : s.add(ri);
   openRounds.value = s;
+}
+
+// Split matches into columns of 2 rows: [m1,m2,m3,m4,m5,m6] → [[m1,m2],[m3,m4],[m5,m6]]
+function toColumns(matches, rowsPerCol = 2) {
+  const cols = [];
+  for (let i = 0; i < matches.length; i += rowsPerCol) {
+    cols.push(matches.slice(i, i + rowsPerCol));
+  }
+  return cols;
 }
 
 // ─── type helpers ──────────────────────────────────────────────────────────────
@@ -326,11 +334,17 @@ const chipColor = (m, side) => {
   overflow-x: auto;
   padding: 12px 16px;
 }
-.round-matches-grid {
-  display: grid;
-  grid-template-rows: repeat(2, auto);
-  grid-auto-flow: row;
+.round-cols {
+  display: flex;
+  flex-direction: row;
   gap: 8px;
+}
+.round-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 220px;
 }
 
 .match-card {
