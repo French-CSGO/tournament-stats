@@ -238,7 +238,9 @@ function groupByRound(matches) {
 
 const swissRounds = computed(() => {
   if (!current.value) return [];
-  return groupByRound(current.value.matches);
+  // Only show matches that have at least one participant assigned
+  const played = current.value.matches.filter((m) => m.player1_id || m.player2_id);
+  return groupByRound(played);
 });
 
 const standings = computed(() => {

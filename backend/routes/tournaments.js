@@ -19,7 +19,7 @@ router.get("/season/:id", async (req, res) => {
     if (rows.length > 0) return res.json(rows);
 
     const [[season]] = await db.query(
-      `SELECT challonge_url FROM season WHERE id = ? AND is_challonge = 1 AND challonge_url IS NOT NULL AND challonge_url != ''`,
+      `SELECT challonge_url FROM season WHERE id = ? AND challonge_url IS NOT NULL AND challonge_url != ''`,
       [req.params.id]
     );
     if (season?.challonge_url) {

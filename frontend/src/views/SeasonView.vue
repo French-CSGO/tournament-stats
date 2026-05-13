@@ -1,7 +1,7 @@
 <template>
   <div v-if="loading"><v-progress-circular indeterminate /></div>
   <div v-else>
-    <div class="d-flex align-center mb-6 gap-4">
+    <div class="d-flex align-center mb-6 gap-2 flex-wrap">
       <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" />
       <h1 class="text-h5">{{ data.season.name }}</h1>
       <v-spacer />
@@ -11,7 +11,6 @@
         prepend-icon="mdi-tournament"
         variant="tonal"
         size="small"
-        color="primary"
         :to="`/season/${route.params.id}/tournaments`"
       >Tournois</v-btn>
     </div>
