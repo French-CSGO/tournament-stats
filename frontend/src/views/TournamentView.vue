@@ -17,7 +17,7 @@
       <!-- Sélecteur de tournoi si plusieurs -->
       <div v-if="tournaments.length > 1" class="mb-4">
         <v-tabs v-model="activeTournament" color="primary" density="compact">
-          <v-tab v-for="t in tournaments" :key="t.challonge_url" :value="t.challonge_url">
+          <v-tab v-for="t in tournaments" :key="t.challonge_slug" :value="t.challonge_slug">
             {{ t.displayName }}
             <v-chip v-if="t.type" class="ml-2" size="x-small" :color="typeColor(t.type)" variant="tonal">
               {{ typeLabel(t.type) }}
@@ -163,9 +163,9 @@ async function loadTournamentData(slug) {
   try {
     const { data } = await getTournament(slug);
     bracketData.value = { ...bracketData.value, [slug]: data };
-    const entry = tournaments.value.find((t) => t.challonge_url === slug);
+    const entry = tournaments.value.find((t) => t.challonge_slug === slug);
     if (entry) {
-      if (!entry.name) entry.displayName = data.tournament.name;
+      if (!entry.label) entry.displayName = data.tournament.name;
       entry.type = data.tournament.tournament_type;
     }
   } catch (e) {
@@ -181,7 +181,7 @@ onMounted(async () => {
   ]);
 
   seasonName.value = seasons.find((s) => s.id === parseInt(seasonId))?.name ?? "";
-  tournaments.value = list.map((t) => ({ ...t, displayName: t.name || t.challonge_url, type: null }));
+  tournaments.value = list.map((t) => ({ ...t, displayName: t.label || t.challonge_slug, type: null }));
 
   if (!tournaments.value.length) {
     error.value = "Aucun tournoi Challonge lié à cette saison.";
@@ -190,9 +190,9 @@ onMounted(async () => {
   }
 
   const slugFromUrl = route.params.slug;
-  activeTournament.value = slugFromUrl && list.find((t) => t.challonge_url === slugFromUrl)
+  activeTournament.value = slugFromUrl && list.find((t) => t.challonge_slug === slugFromUrl)
     ? slugFromUrl
-    : list[0].challonge_url;
+    : list[0].challonge_slug;
 
   await loadTournamentData(activeTournament.value);
   loading.value = false;
@@ -206,7 +206,7 @@ watch(activeTournament, async (slug) => {
 
 const current = computed(() => {
   if (!activeTournament.value) return null;
-  const entry = tournaments.value.find((t) => t.challonge_url === activeTournament.value);
+  const entry = tournaments.value.find((t) => t.challonge_slug === activeTournament.value);
   const data  = bracketData.value[activeTournament.value];
   if (!entry || !data) return null;
   return { ...entry, ...data };

@@ -98,16 +98,16 @@
       <v-row>
         <v-col
           v-for="t in challongeTournaments"
-          :key="t.challonge_url"
+          :key="t.challonge_slug"
           cols="12" sm="6" md="4" lg="3"
         >
           <v-card
-            :to="`/season/${route.params.id}/tournaments/${t.challonge_url}`"
+            :to="`/season/${route.params.id}/tournaments/${t.challonge_slug}`"
             hover
             color="surface"
             class="h-100"
           >
-            <v-card-title class="text-body-1">{{ t.name || t.challonge_url }}</v-card-title>
+            <v-card-title class="text-body-1">{{ t.label || t.challonge_slug }}</v-card-title>
             <v-card-text>
               <v-chip size="small" color="primary" variant="tonal" prepend-icon="mdi-open-in-new">
                 Voir le bracket

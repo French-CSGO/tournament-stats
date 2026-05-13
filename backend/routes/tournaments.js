@@ -8,10 +8,10 @@ const router = Router();
 router.get("/season/:id", async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT id, season_id, challonge_url, name
+      `SELECT id, season_id, challonge_slug, label
        FROM season_challonge_tournament
        WHERE season_id = ?
-       ORDER BY id`,
+       ORDER BY display_order, id`,
       [req.params.id]
     );
     res.json(rows);
