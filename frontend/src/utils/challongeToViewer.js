@@ -48,10 +48,10 @@ function buildStage({ stageId, stageName, stageType, tournament, matches, resolv
   upperRounds.forEach((r, i) => { roundIdMap[r] = roundOffset + i; });
   lowerRounds.forEach((r, i) => { roundIdMap[r] = roundOffset + upperRounds.length + i; });
 
-  // For round robin, remap group_ids to 0-based sequential values
+  // For round robin, remap Challonge group_ids (large ints) to 0-based sequential viewer IDs
   const groupIdRemap = {};
   if (stageType === "round_robin") {
-    const uniqueGroups = [...new Set(matches.map((m) => m.group_id).filter((g) => g != null))].sort();
+    const uniqueGroups = [...new Set(matches.map((m) => m.group_id).filter((g) => g != null))].sort((a, b) => a - b);
     uniqueGroups.forEach((g, i) => { groupIdRemap[g] = groupIdOffset + i; });
   }
 
@@ -139,11 +139,11 @@ export function challongeToViewerData(challongeData, { matchFilter, overrideType
 }
 
 // Returns true if this tournament has separate group-stage matches AND bracket matches.
-// Group-stage: no prereq match id (players pre-assigned to groups).
-// Bracket:     player comes from the winner/loser of a previous match.
+// Group-stage: match has a group_id (assigned to a round-robin group).
+// Bracket:     match has no group_id (cross-group playoff).
 export function hasGroupAndBracketStages(matches) {
-  const hasGroup   = matches.some((m) => !m.player1_prereq_match_id && !m.player2_prereq_match_id && (m.player1_id || m.player2_id));
-  const hasBracket = matches.some((m) => m.player1_prereq_match_id != null || m.player2_prereq_match_id != null);
+  const hasGroup   = matches.some((m) => m.group_id != null);
+  const hasBracket = matches.some((m) => m.group_id == null);
   return hasGroup && hasBracket;
 }
 
@@ -151,11 +151,9 @@ export function hasGroupAndBracketStages(matches) {
 export function challongeToViewerDataGroupBracket(challongeData) {
   const { tournament, participants, matches } = challongeData;
 
-  const isGroupMatch   = (m) => !m.player1_prereq_match_id && !m.player2_prereq_match_id;
-  const isBracketMatch = (m) => m.player1_prereq_match_id != null || m.player2_prereq_match_id != null;
-
-  const groupMatches   = matches.filter(isGroupMatch);
-  const bracketMatches = matches.filter(isBracketMatch);
+  // group_id present → round-robin group stage; absent → playoff bracket
+  const groupMatches   = matches.filter((m) => m.group_id != null);
+  const bracketMatches = matches.filter((m) => m.group_id == null);
 
   const groupPlayerMap = {};
   for (const p of participants) {
