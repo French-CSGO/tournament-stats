@@ -49,8 +49,20 @@
           >Voir sur Challonge</v-btn>
         </div>
 
-        <!-- Bracket élimination / round robin via brackets-viewer -->
-        <template v-if="isElim || isRoundRobin">
+        <!-- Round robin + bracket (deux phases distinctes) -->
+        <template v-if="isGroupAndBracket">
+          <v-card color="surface" class="pa-4 mb-4" style="overflow-x: auto">
+            <div class="text-subtitle-1 mb-3">Phase de groupes</div>
+            <BracketsViewerWrapper v-if="groupViewerData" :data="groupViewerData" :key="`${activeTournament}-groups`" />
+          </v-card>
+          <v-card color="surface" class="pa-4" style="overflow-x: auto">
+            <div class="text-subtitle-1 mb-3">Bracket</div>
+            <BracketsViewerWrapper v-if="bracketViewerData" :data="bracketViewerData" :key="`${activeTournament}-bracket`" />
+          </v-card>
+        </template>
+
+        <!-- Bracket élimination / round robin simple via brackets-viewer -->
+        <template v-else-if="isElim || isRoundRobin">
           <v-card color="surface" class="pa-4" style="overflow-x: auto">
             <BracketsViewerWrapper v-if="viewerData" :data="viewerData" :key="activeTournament" />
             <div v-else class="text-center py-6 text-medium-emphasis text-caption">
@@ -103,7 +115,7 @@ import { useRoute } from "vue-router";
 import { getSeasons, getSeasonTournaments, getTournament } from "../api/index.js";
 import BracketsViewerWrapper from "../components/BracketsViewerWrapper.vue";
 import SwissBracket from "../components/SwissBracket.vue";
-import { challongeToViewerData } from "../utils/challongeToViewer.js";
+import { challongeToViewerData, hasGroupAndBracketStages, challongeToViewerDataGroupBracket } from "../utils/challongeToViewer.js";
 
 const route = useRoute();
 const loading  = ref(true);
@@ -195,9 +207,24 @@ const isElim       = computed(() =>
 );
 const isRoundRobin = computed(() => current.value?.type === "round robin");
 
-// brackets-viewer data (elim + round robin)
+// Detect mixed tournament (round robin groups + elimination bracket)
+const isGroupAndBracket = computed(() => {
+  if (!current.value) return false;
+  return hasGroupAndBracketStages(current.value.matches);
+});
+
+// Separate viewer data for mixed tournaments
+const _groupBracketData = computed(() => {
+  if (!isGroupAndBracket.value) return null;
+  try { return challongeToViewerDataGroupBracket(current.value); } catch { return null; }
+});
+const groupViewerData   = computed(() => _groupBracketData.value?.groupData   ?? null);
+const bracketViewerData = computed(() => _groupBracketData.value?.bracketData ?? null);
+
+// brackets-viewer data (single stage: elim or round robin)
 const viewerData = computed(() => {
-  if (!current.value || (!isElim.value && !isRoundRobin.value)) return null;
+  if (!current.value || isGroupAndBracket.value) return null;
+  if (!isElim.value && !isRoundRobin.value) return null;
   try {
     return challongeToViewerData(current.value);
   } catch {

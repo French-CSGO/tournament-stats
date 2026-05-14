@@ -13,7 +13,7 @@
     </div>
 
     <v-row>
-      <v-col cols="12" md="5">
+      <v-col cols="12" md="4">
         <v-card color="surface">
           <v-card-title class="text-subtitle-1">Classement</v-card-title>
           <v-data-table
@@ -35,33 +35,10 @@
           </v-data-table>
         </v-card>
       </v-col>
-      <v-col cols="12" md="7">
-        <v-card color="surface">
-          <v-card-title class="text-subtitle-1">Rounds</v-card-title>
-          <v-expansion-panels variant="accordion" flat>
-            <v-expansion-panel
-              v-for="(round, ri) in swissRounds"
-              :key="ri"
-              :title="`Round ${ri + 1}`"
-              color="surface"
-            >
-              <template #text>
-                <div class="round-matches-grid">
-                  <div v-for="m in round" :key="m.id" class="match-card">
-                    <div class="match-side" :class="{ winner: m.winner === 1, loser: m.winner === 2 }">
-                      <span class="match-name text-body-2">{{ m.t1 }}</span>
-                      <v-chip size="x-small" :color="m.winner === 1 ? 'success' : m.winner === 2 ? 'error' : 'default'" variant="flat" class="match-score">{{ m.s1 }}</v-chip>
-                    </div>
-                    <div class="match-sep" />
-                    <div class="match-side" :class="{ winner: m.winner === 2, loser: m.winner === 1 }">
-                      <span class="match-name text-body-2">{{ m.t2 }}</span>
-                      <v-chip size="x-small" :color="m.winner === 2 ? 'success' : m.winner === 1 ? 'error' : 'default'" variant="flat" class="match-score">{{ m.s2 }}</v-chip>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </v-expansion-panel>
-          </v-expansion-panels>
+      <v-col cols="12" md="8">
+        <v-card color="surface" class="pa-4">
+          <div class="text-subtitle-1 mb-3">Bracket</div>
+          <SwissBracket :matches="mockMatches" :participants="mockParticipants" />
         </v-card>
       </v-col>
     </v-row>
@@ -69,8 +46,10 @@
 </template>
 
 <script setup>
-// 32 teams
-const teams = [
+import SwissBracket from "../components/SwissBracket.vue";
+
+// ─── Mock participants (32 teams) ─────────────────────────────────────────────
+const names = [
   "Magic Monkey","Julie & Cie","YUYIETTE","Horrible Squad","Grand Chien Gland","Squadra Corsa",
   "Les Fraudes","2DMAX","ArcMonkey","Jambono","Bras KC","DOGO DINGO Esport",
   "Team Alpha","Team Bravo","Team Charlie","Team Delta","Team Echo","Team Foxtrot",
@@ -78,114 +57,79 @@ const teams = [
   "Team Mike","Team November","Team Oscar","Team Papa","Team Quebec","Team Romeo",
   "Team Sierra","Team Tango",
 ];
+const mockParticipants = names.map((name, i) => ({ id: i + 1, name }));
 
-// Round 1: 16 matches, all seeded (top vs bottom)
-const swissRounds = [
-  [
-    { id:1,  t1:"Magic Monkey",      s1:13, t2:"Team Tango",       s2:2,  winner:1 },
-    { id:2,  t1:"Julie & Cie",       s1:13, t2:"Team Sierra",      s2:5,  winner:1 },
-    { id:3,  t1:"YUYIETTE",          s1:13, t2:"Team Romeo",       s2:7,  winner:1 },
-    { id:4,  t1:"Horrible Squad",    s1:13, t2:"Team Quebec",      s2:4,  winner:1 },
-    { id:5,  t1:"Grand Chien Gland", s1:13, t2:"Team Papa",        s2:8,  winner:1 },
-    { id:6,  t1:"Squadra Corsa",     s1:13, t2:"Team Oscar",       s2:6,  winner:1 },
-    { id:7,  t1:"Les Fraudes",       s1:13, t2:"Team November",    s2:3,  winner:1 },
-    { id:8,  t1:"2DMAX",             s1:13, t2:"Team Mike",        s2:9,  winner:1 },
-    { id:9,  t1:"ArcMonkey",         s1:13, t2:"Team Lima",        s2:5,  winner:1 },
-    { id:10, t1:"Jambono",           s1:13, t2:"Team Kilo",        s2:7,  winner:1 },
-    { id:11, t1:"Bras KC",           s1:7,  t2:"Team Juliet",      s2:13, winner:2 },
-    { id:12, t1:"DOGO DINGO Esport", s1:4,  t2:"Team India",       s2:13, winner:2 },
-    { id:13, t1:"Team Alpha",        s1:13, t2:"Team Hotel",       s2:11, winner:1 },
-    { id:14, t1:"Team Bravo",        s1:9,  t2:"Team Golf",        s2:13, winner:2 },
-    { id:15, t1:"Team Charlie",      s1:13, t2:"Team Foxtrot",     s2:6,  winner:1 },
-    { id:16, t1:"Team Delta",        s1:13, t2:"Team Echo",        s2:10, winner:1 },
-  ],
-  // Round 2: 1-0 vs 1-0, 0-1 vs 0-1
-  [
-    { id:17, t1:"Magic Monkey",      s1:13, t2:"Julie & Cie",      s2:9,  winner:1 },
-    { id:18, t1:"YUYIETTE",          s1:13, t2:"Horrible Squad",   s2:10, winner:1 },
-    { id:19, t1:"Grand Chien Gland", s1:13, t2:"Squadra Corsa",    s2:8,  winner:1 },
-    { id:20, t1:"Les Fraudes",       s1:13, t2:"2DMAX",            s2:6,  winner:1 },
-    { id:21, t1:"ArcMonkey",         s1:13, t2:"Jambono",          s2:11, winner:1 },
-    { id:22, t1:"Team India",        s1:13, t2:"Team Juliet",      s2:7,  winner:1 },
-    { id:23, t1:"Team Alpha",        s1:13, t2:"Team Charlie",     s2:8,  winner:1 },
-    { id:24, t1:"Team Delta",        s1:13, t2:"Team Golf",        s2:5,  winner:1 },
-    // 0-1 losers bracket
-    { id:25, t1:"Julie & Cie",       s1:13, t2:"Horrible Squad",   s2:7,  winner:1 },
-    { id:26, t1:"Squadra Corsa",     s1:13, t2:"2DMAX",            s2:9,  winner:1 },
-    { id:27, t1:"Jambono",           s1:13, t2:"Team Juliet",      s2:5,  winner:1 },
-    { id:28, t1:"Team Charlie",      s1:13, t2:"Team Golf",        s2:10, winner:1 },
-    { id:29, t1:"Bras KC",           s1:4,  t2:"DOGO DINGO Esport",s2:13, winner:2 },
-    { id:30, t1:"Team Bravo",        s1:13, t2:"Team Foxtrot",     s2:6,  winner:1 },
-    { id:31, t1:"Team Hotel",        s1:7,  t2:"Team Romeo",       s2:13, winner:2 },
-    { id:32, t1:"Team Sierra",       s1:13, t2:"Team Tango",       s2:4,  winner:1 },
-  ],
-  // Round 3: 2-0 vs 2-0, 1-1 vs 1-1, 0-2 vs 0-2
-  [
-    { id:33, t1:"Magic Monkey",      s1:13, t2:"YUYIETTE",         s2:6,  winner:1 },
-    { id:34, t1:"Grand Chien Gland", s1:13, t2:"Les Fraudes",      s2:11, winner:1 },
-    { id:35, t1:"ArcMonkey",         s1:13, t2:"Team India",       s2:8,  winner:1 },
-    { id:36, t1:"Team Alpha",        s1:13, t2:"Team Delta",       s2:10, winner:1 },
-    // 1-1 bracket (16 teams)
-    { id:37, t1:"Julie & Cie",       s1:13, t2:"Squadra Corsa",    s2:7,  winner:1 },
-    { id:38, t1:"Horrible Squad",    s1:13, t2:"2DMAX",            s2:5,  winner:1 },
-    { id:39, t1:"Jambono",           s1:13, t2:"Team Charlie",     s2:9,  winner:1 },
-    { id:40, t1:"Team Bravo",        s1:13, t2:"Team Delta",       s2:8,  winner:1 },
-    { id:41, t1:"YUYIETTE",          s1:13, t2:"Team India",       s2:4,  winner:1 },
-    { id:42, t1:"Les Fraudes",       s1:7,  t2:"Team Alpha",       s2:13, winner:2 },
-    { id:43, t1:"2DMAX",             s1:13, t2:"Squadra Corsa",    s2:10, winner:1 },
-    { id:44, t1:"Team Charlie",      s1:13, t2:"Jambono",          s2:6,  winner:1 },
-    // 0-2 → eliminated
-    { id:45, t1:"DOGO DINGO Esport", s1:13, t2:"Bras KC",          s2:5,  winner:1 },
-    { id:46, t1:"Team Romeo",        s1:13, t2:"Team Sierra",      s2:8,  winner:1 },
-    { id:47, t1:"Team Hotel",        s1:13, t2:"Team Foxtrot",     s2:4,  winner:1 },
-    { id:48, t1:"Team Tango",        s1:7,  t2:"Team Quebec",      s2:13, winner:2 },
-  ],
-  // Round 4: 3-0 → qualified, 2-1 vs 2-1, 1-2 vs 1-2, 0-3 → eliminated
-  [
-    // 3-0 matches (→ directly qualified)
-    { id:49, t1:"Magic Monkey",      s1:13, t2:"Grand Chien Gland",s2:5,  winner:1 },
-    { id:50, t1:"ArcMonkey",         s1:9,  t2:"Team Alpha",       s2:13, winner:2 },
-    // 2-1 bracket (12 teams)
-    { id:51, t1:"Julie & Cie",       s1:13, t2:"YUYIETTE",         s2:11, winner:1 },
-    { id:52, t1:"Horrible Squad",    s1:13, t2:"2DMAX",            s2:7,  winner:1 },
-    { id:53, t1:"Jambono",           s1:13, t2:"Team Charlie",     s2:6,  winner:1 },
-    { id:54, t1:"Team Bravo",        s1:13, t2:"Team Alpha",       s2:9,  winner:1 },
-    { id:55, t1:"Grand Chien Gland", s1:13, t2:"Les Fraudes",      s2:8,  winner:1 },
-    { id:56, t1:"ArcMonkey",         s1:13, t2:"Squadra Corsa",    s2:5,  winner:1 },
-    // 1-2 bracket (→ last chance)
-    { id:57, t1:"DOGO DINGO Esport", s1:13, t2:"Team Romeo",       s2:6,  winner:1 },
-    { id:58, t1:"Team Quebec",       s1:13, t2:"Team Hotel",       s2:7,  winner:1 },
-    { id:59, t1:"Team Sierra",       s1:4,  t2:"Team Foxtrot",     s2:13, winner:2 },
-    { id:60, t1:"Team Oscar",        s1:13, t2:"Team November",    s2:8,  winner:1 },
-    { id:61, t1:"Team Mike",         s1:13, t2:"Team Kilo",        s2:9,  winner:1 },
-    { id:62, t1:"Team Lima",         s1:7,  t2:"Team Papa",        s2:13, winner:2 },
-    // 0-3 → eliminated (listed for completeness)
-    { id:63, t1:"Team Tango",        s1:3,  t2:"Team Golf",        s2:13, winner:2 },
-    { id:64, t1:"Bras KC",           s1:5,  t2:"Team Echo",        s2:13, winner:2 },
-  ],
-  // Round 5: decisive round — 3-1 qualified, 2-2 last chance, 1-3 eliminated
-  [
-    { id:65, t1:"Julie & Cie",       s1:13, t2:"Horrible Squad",   s2:9,  winner:1 },
-    { id:66, t1:"Jambono",           s1:7,  t2:"Team Bravo",       s2:13, winner:2 },
-    { id:67, t1:"Grand Chien Gland", s1:13, t2:"ArcMonkey",        s2:10, winner:1 },
-    { id:68, t1:"YUYIETTE",          s1:13, t2:"2DMAX",            s2:4,  winner:1 },
-    { id:69, t1:"Les Fraudes",       s1:13, t2:"Squadra Corsa",    s2:8,  winner:1 },
-    { id:70, t1:"Team Charlie",      s1:11, t2:"Team Alpha",       s2:13, winner:2 },
-    // 2-2 last chance
-    { id:71, t1:"DOGO DINGO Esport", s1:9,  t2:"Team Quebec",      s2:13, winner:2 },
-    { id:72, t1:"Team Foxtrot",      s1:13, t2:"Team Oscar",       s2:6,  winner:1 },
-    { id:73, t1:"Team Mike",         s1:13, t2:"Team Papa",        s2:7,  winner:1 },
-    { id:74, t1:"Team Hotel",        s1:13, t2:"Team Romeo",       s2:5,  winner:1 },
-    { id:75, t1:"Team Kilo",         s1:7,  t2:"Team November",    s2:13, winner:2 },
-    { id:76, t1:"Team India",        s1:13, t2:"Team Sierra",      s2:9,  winner:1 },
-    // 1-3 → eliminated
-    { id:77, t1:"Team Golf",         s1:4,  t2:"Team Echo",        s2:13, winner:2 },
-    { id:78, t1:"Team Lima",         s1:13, t2:"Team Bravo",       s2:6,  winner:1 },
-    { id:79, t1:"Team Tango",        s1:8,  t2:"Team Delta",       s2:13, winner:2 },
-    { id:80, t1:"Team Oscar",        s1:13, t2:"Team Foxtrot",     s2:4,  winner:1 },
-  ],
+// Helper: build a match object in Challonge format
+let _mid = 1;
+function match(round, p1, p2, s1, s2) {
+  const id = _mid++;
+  const winner_id = s1 > s2 ? p1 : s2 > s1 ? p2 : null;
+  return { id, round, player1_id: p1, player2_id: p2, winner_id, scores_csv: `${s1}-${s2}` };
+}
+
+// ─── Round 1 (all 0-0) ────────────────────────────────────────────────────────
+const r1 = [
+  match(1, 1,  32, 13, 2),  match(1, 2,  31, 13, 5),
+  match(1, 3,  30, 13, 7),  match(1, 4,  29, 13, 4),
+  match(1, 5,  28, 13, 8),  match(1, 6,  27, 13, 6),
+  match(1, 7,  26, 13, 3),  match(1, 8,  25, 13, 9),
+  match(1, 9,  24, 13, 5),  match(1, 10, 23, 13, 7),
+  match(1, 11, 22,  7,13),  match(1, 12, 21,  4,13),
+  match(1, 13, 20, 13,11),  match(1, 14, 19,  9,13),
+  match(1, 15, 18, 13, 6),  match(1, 16, 17, 13,10),
 ];
 
+// ─── Round 2 (1-0 vs 1-0, 0-1 vs 0-1) ───────────────────────────────────────
+const r2 = [
+  match(2, 1,  2, 13, 9),  match(2, 3,  5, 13, 8),
+  match(2, 7,  6, 13, 8),  match(2, 8, 10, 13, 6),
+  match(2, 9, 13, 13,11),  match(2, 15,16, 13, 5),
+  match(2, 4, 12, 13, 7),  match(2, 11,14, 13, 8), // 0-1 bracket
+  match(2, 22,32,  4,13),  match(2, 21,31, 13, 7),
+  match(2, 23,30, 13, 8),  match(2, 24,29,  6,13),
+  match(2, 25,28, 13, 5),  match(2, 26,27, 13, 4),
+  match(2, 18,20, 13, 6),  match(2, 17,19,  8,13),
+];
+
+// ─── Round 3 (2-0, 1-1, 0-2) ─────────────────────────────────────────────────
+const r3 = [
+  match(3, 1,  3, 13, 6),  match(3, 7,  8, 13, 5),  // 2-0
+  match(3, 9, 15, 13, 8),  match(3, 13,16, 13,10),
+  match(3, 2,  6, 13, 7),  match(3, 5, 10, 13, 8),  // 1-1
+  match(3, 4, 11, 13, 9),  match(3, 12,14, 13, 6),
+  match(3, 3, 21, 13, 4),  match(3, 6, 22,  8,13),  // extra 1-1
+  match(3, 32,31, 13, 8),  match(3, 30,29,  4,13),  // 0-2
+  match(3, 27,28, 13, 5),  match(3, 26,25,  3,13),
+  match(3, 20,19, 13, 6),  match(3, 18,17, 13, 7),
+];
+
+// ─── Round 4 (3-0, 2-1, 1-2, 0-3) ────────────────────────────────────────────
+const r4 = [
+  match(4, 1,  7, 13, 5),  match(4, 9, 13, 9,13),  // 3-0
+  match(4, 8, 15, 13, 7),  match(4, 16, 3, 13, 8), // 3-0 pool
+  match(4, 2,  5, 13,11),  match(4, 4, 12, 13, 7), // 2-1
+  match(4, 11,14,  7,13),  match(4, 10, 6, 13, 9),
+  match(4, 32,21, 13, 6),  match(4, 29,30, 13, 8), // 1-2
+  match(4, 25,27, 13, 4),  match(4, 22,23, 7,13),
+  match(4, 19,20, 13, 5),  match(4, 17,18,  6,13),
+  match(4, 28,31,  3,13),  match(4, 26,24,  4,13),
+];
+
+// ─── Round 5 (decisive) ───────────────────────────────────────────────────────
+const r5 = [
+  match(5, 1,  2, 13, 9),  match(5, 13,16, 13, 7), // 4-0 / 3-1
+  match(5, 8, 15, 11,13),  match(5, 4, 10, 13, 8),
+  match(5, 5, 12, 13, 6),  match(5, 14, 3, 13,10),
+  match(5, 6, 11, 13, 7),  match(5, 9,  7,  8,13),
+  match(5, 32,29, 13, 5),  match(5, 23,30,  6,13), // 2-2 last chance
+  match(5, 25,19, 13, 7),  match(5, 26,17, 13, 8),
+  match(5, 31,22, 13, 4),  match(5, 24,28,  7,13),
+  match(5, 20,27, 13, 3),  match(5, 18,21,  5,13),
+];
+
+const mockMatches = [...r1, ...r2, ...r3, ...r4, ...r5];
+
+// ─── Standings ────────────────────────────────────────────────────────────────
 const standings = [
   { rank:1,  name:"Magic Monkey",      wins:5, losses:0, pts:5 },
   { rank:2,  name:"Team Alpha",        wins:4, losses:1, pts:4 },
@@ -218,7 +162,7 @@ const standings = [
   { rank:29, name:"Team Papa",         wins:1, losses:4, pts:1 },
   { rank:30, name:"Bras KC",           wins:0, losses:3, pts:0 },
   { rank:31, name:"Team Tango",        wins:0, losses:4, pts:0 },
-  { rank:32, name:"Team Hotel",        wins:0, losses:3, pts:0 },
+  { rank:32, name:"Team Foxtrot",      wins:0, losses:3, pts:0 },
 ];
 
 const standingsHeaders = [
@@ -229,32 +173,3 @@ const standingsHeaders = [
   { title:"Pts",    key:"pts",    sortable:false },
 ];
 </script>
-
-<style scoped>
-.round-matches-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 4px 0;
-}
-@media (max-width: 600px) {
-  .round-matches-grid { grid-template-columns: 1fr; }
-}
-.match-card {
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  overflow: hidden;
-  background: #252e3d;
-}
-.match-side {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-}
-.match-side.loser .match-name { opacity: 0.45; }
-.match-side.winner .match-name { font-weight: 600; }
-.match-name { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.match-score { flex-shrink: 0; }
-.match-sep { height: 1px; background: rgba(255,255,255,0.08); }
-</style>
