@@ -46,6 +46,16 @@ export function challongeToViewerData(challongeData) {
     name:          p.name,
   }));
 
+  // Challonge uses group_player_ids in group-stage matches — map them back to the
+  // real participant id so brackets-viewer can find the participant.
+  const groupPlayerMap = {};
+  for (const p of participants) {
+    for (const gpId of (p.group_player_ids ?? [])) {
+      groupPlayerMap[gpId] = p.id;
+    }
+  }
+  const resolveId = (id) => (id == null ? null : (groupPlayerMap[id] ?? id));
+
   // Build rounds mapping
   const upperRounds = [...new Set(
     matches.filter((m) => m.round > 0).map((m) => m.round).sort((a, b) => a - b)
@@ -78,8 +88,8 @@ export function challongeToViewerData(challongeData) {
       number:     roundMatchCounter[roundId],
       child_count: 0,
       status:     challongeStatus(m),
-      opponent1:  toOpponent(m.player1_id, m.winner_id, m.scores_csv, 0),
-      opponent2:  toOpponent(m.player2_id, m.winner_id, m.scores_csv, 1),
+      opponent1:  toOpponent(resolveId(m.player1_id), resolveId(m.winner_id), m.scores_csv, 0),
+      opponent2:  toOpponent(resolveId(m.player2_id), resolveId(m.winner_id), m.scores_csv, 1),
     };
   });
 
