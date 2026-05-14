@@ -119,7 +119,9 @@ watch(() => props.data, render, { deep: true });
   --border-selected-color: #00BCD4;
   --text-size:             13px;
   --match-width:           180px;
-  overflow-x: auto;
+  /* overflow-x is set on the parent card in TournamentView to avoid
+     CSS spec forcing overflow-y: auto when overflow-x: auto is set */
+  min-width: max-content;
 }
 
 /* Background of the whole container */

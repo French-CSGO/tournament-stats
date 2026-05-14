@@ -51,15 +51,18 @@
 
         <!-- Bracket élimination / round robin via brackets-viewer -->
         <template v-if="isElim || isRoundRobin">
-          <v-card color="surface" class="pa-4">
+          <v-card color="surface" class="pa-4" style="overflow-x: auto">
             <BracketsViewerWrapper v-if="viewerData" :data="viewerData" :key="activeTournament" />
+            <div v-else class="text-center py-6 text-medium-emphasis text-caption">
+              Impossible de charger le bracket (données invalides ou type non supporté).
+            </div>
           </v-card>
         </template>
 
-        <!-- Swiss — brackets-viewer ne supporte pas nativement, affichage manuel -->
+        <!-- Swiss — affichage bracket style colonne par record -->
         <template v-else-if="current.type === 'swiss'">
           <v-row>
-            <v-col cols="12" md="5">
+            <v-col cols="12" md="4">
               <v-card color="surface">
                 <v-card-title class="text-subtitle-1">Classement</v-card-title>
                 <v-data-table
@@ -81,37 +84,10 @@
                 </v-data-table>
               </v-card>
             </v-col>
-            <v-col cols="12" md="7">
-              <v-card color="surface">
-                <v-card-title class="text-subtitle-1">Rounds</v-card-title>
-                <v-expansion-panels variant="accordion" flat>
-                  <v-expansion-panel
-                    v-for="(round, ri) in swissRounds"
-                    :key="ri"
-                    :title="`Round ${ri + 1}`"
-                    color="surface"
-                  >
-                    <template #text>
-                      <div class="round-matches-grid">
-                        <div
-                          v-for="m in round"
-                          :key="m.id"
-                          class="match-card"
-                        >
-                          <div class="match-side" :class="{ winner: m.winner_id === m.player1_id, loser: m.winner_id && m.winner_id !== m.player1_id }">
-                            <span class="match-name text-body-2">{{ participantsMap[m.player1_id]?.name ?? '?' }}</span>
-                            <v-chip size="x-small" :color="chipColor(m, 1)" variant="flat" class="match-score">{{ scoreP1(m) }}</v-chip>
-                          </div>
-                          <div class="match-sep" />
-                          <div class="match-side" :class="{ winner: m.winner_id === m.player2_id, loser: m.winner_id && m.winner_id !== m.player2_id }">
-                            <span class="match-name text-body-2">{{ participantsMap[m.player2_id]?.name ?? '?' }}</span>
-                            <v-chip size="x-small" :color="chipColor(m, 2)" variant="flat" class="match-score">{{ scoreP2(m) }}</v-chip>
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                  </v-expansion-panel>
-                </v-expansion-panels>
+            <v-col cols="12" md="8">
+              <v-card color="surface" class="pa-4">
+                <div class="text-subtitle-1 mb-3">Bracket</div>
+                <SwissBracket :matches="current.matches" :participants="current.participants" />
               </v-card>
             </v-col>
           </v-row>
@@ -126,6 +102,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getSeasons, getSeasonTournaments, getTournament } from "../api/index.js";
 import BracketsViewerWrapper from "../components/BracketsViewerWrapper.vue";
+import SwissBracket from "../components/SwissBracket.vue";
 import { challongeToViewerData } from "../utils/challongeToViewer.js";
 
 const route = useRoute();
@@ -268,61 +245,7 @@ const standingsHeaders = [
   { title: "Pts",     key: "pts",    sortable: false },
 ];
 
-// ─── score helpers ────────────────────────────────────────────────────────────
-
-function parseScores(m) {
-  if (!m.scores_csv) return [null, null];
-  const parts = m.scores_csv.split(",").map((s) => s.split("-").map(Number));
-  return [parts.reduce((a, p) => a + (p[0] ?? 0), 0), parts.reduce((a, p) => a + (p[1] ?? 0), 0)];
-}
-const scoreP1  = (m) => parseScores(m)[0] ?? "-";
-const scoreP2  = (m) => parseScores(m)[1] ?? "-";
-const chipColor = (m, side) => {
-  if (!m.winner_id) return "default";
-  return m.winner_id === (side === 1 ? m.player1_id : m.player2_id) ? "success" : "error";
-};
 </script>
 
 <style scoped>
-.round-matches-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 4px 0;
-}
-@media (max-width: 600px) {
-  .round-matches-grid { grid-template-columns: 1fr; }
-}
-
-.match-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
-  background: #252e3d;
-}
-.match-side {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-}
-.match-side.loser .match-name {
-  opacity: 0.45;
-}
-.match-side.winner .match-name {
-  font-weight: 600;
-}
-.match-name {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.match-score {
-  flex-shrink: 0;
-}
-.match-sep {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-}
 </style>
