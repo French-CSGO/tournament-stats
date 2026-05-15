@@ -60,8 +60,11 @@ function buildStage({ stageId, stageName, stageType, tournament, matches, resolv
     uniqueGroups.forEach((g, i) => { groupIdRemap[g] = groupIdOffset + i; });
   }
 
+  // Sort by suggested_play_order so adjacent pairs (1,2), (3,4)… feed the same next-round match
+  const sortedMatches = [...matches].sort((a, b) => (a.suggested_play_order ?? 0) - (b.suggested_play_order ?? 0));
+
   const roundMatchCounter = {};
-  const viewerMatches = matches.map((m) => {
+  const viewerMatches = sortedMatches.map((m) => {
     const isLower = m.round < 0;
     const roundId = roundIdMap[m.round];
     let groupId;
