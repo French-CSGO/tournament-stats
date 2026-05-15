@@ -19,7 +19,11 @@ function challongeStatus(m) {
 function parseScore(scoresCSV, side) {
   if (!scoresCSV) return undefined;
   const parts = scoresCSV.split(",").map((s) => s.split("-").map(Number));
-  return parts.reduce((acc, p) => acc + (p[side] ?? 0), 0);
+  if (parts.length === 1) return parts[0][side] ?? 0;
+  // Multi-map series: show map win count rather than summed rounds
+  return parts.reduce((acc, [s0, s1]) => {
+    return acc + (side === 0 ? (s0 > s1 ? 1 : 0) : (s1 > s0 ? 1 : 0));
+  }, 0);
 }
 
 function toOpponent(participantId, winnerId, scoresCSV, side) {
@@ -40,8 +44,9 @@ function buildStage({ stageId, stageName, stageType, tournament, matches, resolv
   const upperRounds = [...new Set(
     matches.filter((m) => m.round > 0).map((m) => m.round).sort((a, b) => a - b)
   )];
+  // Sort ascending (most negative last) so round -1 = first LB round gets the lowest round_id
   const lowerRounds = [...new Set(
-    matches.filter((m) => m.round < 0).map((m) => m.round).sort((a, b) => a - b)
+    matches.filter((m) => m.round < 0).map((m) => m.round).sort((a, b) => b - a)
   )];
 
   const roundIdMap = {};
@@ -66,20 +71,27 @@ function buildStage({ stageId, stageName, stageType, tournament, matches, resolv
       groupId = isLower ? 1 : 0;
     }
 
-    roundMatchCounter[roundId] = (roundMatchCounter[roundId] ?? 0) + 1;
+    const counterKey = `${groupId}-${roundId}`;
+    roundMatchCounter[counterKey] = (roundMatchCounter[counterKey] ?? 0) + 1;
 
     return {
       id:          m.id,
       stage_id:    stageId,
       group_id:    groupId,
       round_id:    roundId,
-      number:      roundMatchCounter[roundId],
+      number:      roundMatchCounter[counterKey],
       child_count: 0,
       status:      challongeStatus(m),
       opponent1:   toOpponent(resolveId(m.player1_id), resolveId(m.winner_id), m.scores_csv, 0),
       opponent2:   toOpponent(resolveId(m.player2_id), resolveId(m.winner_id), m.scores_csv, 1),
     };
   });
+
+  // For round robin, compute participants per group; for elimination use total count.
+  const groupCount = Object.keys(groupIdRemap).length || 1;
+  const stageSize = stageType === "round_robin"
+    ? Math.ceil(tournament.participants_count / groupCount)
+    : tournament.participants_count;
 
   const stage = {
     id:            stageId,
@@ -88,7 +100,7 @@ function buildStage({ stageId, stageName, stageType, tournament, matches, resolv
     type:          stageType,
     number:        stageId + 1,
     settings: {
-      size:       tournament.participants_count,
+      size:       stageSize,
       grandFinal: stageType === "double_elimination" ? "simple" : undefined,
     },
   };
@@ -139,11 +151,11 @@ export function challongeToViewerData(challongeData, { matchFilter, overrideType
 }
 
 // Returns true if this tournament has separate group-stage matches AND bracket matches.
-// Group-stage: match has a group_id (assigned to a round-robin group).
-// Bracket:     match has no group_id (cross-group playoff).
+// Group-stage: match has a group_id set, OR is_group_match === true.
+// Bracket:     match has no group_id and is_group_match is not true.
 export function hasGroupAndBracketStages(matches) {
-  const hasGroup   = matches.some((m) => m.group_id != null);
-  const hasBracket = matches.some((m) => m.group_id == null);
+  const hasGroup   = matches.some((m) => m.group_id != null || m.is_group_match === true);
+  const hasBracket = matches.some((m) => m.group_id == null && !m.is_group_match);
   return hasGroup && hasBracket;
 }
 
@@ -151,9 +163,9 @@ export function hasGroupAndBracketStages(matches) {
 export function challongeToViewerDataGroupBracket(challongeData) {
   const { tournament, participants, matches } = challongeData;
 
-  // group_id present → round-robin group stage; absent → playoff bracket
-  const groupMatches   = matches.filter((m) => m.group_id != null);
-  const bracketMatches = matches.filter((m) => m.group_id == null);
+  // group_id present OR is_group_match true → round-robin group stage; otherwise → playoff bracket
+  const groupMatches   = matches.filter((m) => m.group_id != null || m.is_group_match === true);
+  const bracketMatches = matches.filter((m) => m.group_id == null && !m.is_group_match);
 
   const groupPlayerMap = {};
   for (const p of participants) {
