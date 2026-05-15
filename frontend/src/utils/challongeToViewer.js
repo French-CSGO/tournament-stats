@@ -39,8 +39,8 @@ function toOpponent(participantId, winnerId, scoresCSV, side) {
 }
 
 // Build a single-stage ViewerData from a subset of matches.
-// stageId and roundOffset allow composing multiple stages with unique IDs.
-function buildStage({ stageId, stageName, stageType, tournament, matches, resolveId, roundOffset = 0, groupIdOffset = 0 }) {
+// participantsCount overrides tournament.participants_count when only a subset of participants is in this stage.
+function buildStage({ stageId, stageName, stageType, tournament, matches, resolveId, roundOffset = 0, groupIdOffset = 0, participantsCount }) {
   const upperRounds = [...new Set(
     matches.filter((m) => m.round > 0).map((m) => m.round).sort((a, b) => a - b)
   )];
@@ -90,11 +90,12 @@ function buildStage({ stageId, stageName, stageType, tournament, matches, resolv
     };
   });
 
-  // For round robin, compute participants per group; for elimination use total count.
+  // For round robin, compute participants per group; for elimination use actual count.
+  const effectiveCount = participantsCount ?? tournament.participants_count;
   const groupCount = Object.keys(groupIdRemap).length || 1;
   const stageSize = stageType === "round_robin"
-    ? Math.ceil(tournament.participants_count / groupCount)
-    : tournament.participants_count;
+    ? Math.ceil(effectiveCount / groupCount)
+    : effectiveCount;
 
   const stage = {
     id:            stageId,
@@ -192,16 +193,21 @@ export function challongeToViewerDataGroupBracket(challongeData) {
     resolveId,
   });
 
+  // Count actual bracket participants — tournament.participants_count includes group-stage participants
+  const bracketParticipantCount = new Set(
+    bracketMatches.flatMap(m => [resolveId(m.player1_id), resolveId(m.player2_id)]).filter(Boolean)
+  ).size;
+
   // Bracket stage: single or double elimination based on presence of negative rounds
   const bracketType = bracketMatches.some((m) => m.round < 0) ? "double_elimination" : "single_elimination";
   const bracketBuilt = buildStage({
-    stageId:      1,
-    stageName:    `${tournament.name} — Bracket`,
-    stageType:    bracketType,
+    stageId:           1,
+    stageName:         `${tournament.name} — Bracket`,
+    stageType:         bracketType,
     tournament,
-    matches:      bracketMatches,
+    matches:           bracketMatches,
     resolveId,
-    roundOffset:  groupBuilt.roundCount,
+    participantsCount: bracketParticipantCount,
   });
 
   return {
