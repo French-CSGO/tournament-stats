@@ -1,11 +1,18 @@
 <template>
   <div v-if="loading"><v-progress-circular indeterminate /></div>
   <div v-else>
-    <div class="d-flex align-center mb-6 gap-4">
+    <div class="d-flex align-center mb-6 gap-2 flex-wrap">
       <v-btn icon="mdi-arrow-left" variant="text" @click="$router.back()" />
       <h1 class="text-h5">{{ data.season.name }}</h1>
       <v-spacer />
       <v-btn prepend-icon="mdi-chart-bar" variant="tonal" size="small" :to="`/stats/season/${route.params.id}`">Stats détaillées</v-btn>
+      <v-btn
+        v-if="challongeTournaments.length"
+        prepend-icon="mdi-tournament"
+        variant="tonal"
+        size="small"
+        :to="`/season/${route.params.id}/tournaments`"
+      >Tournois</v-btn>
     </div>
 
     <v-row>
@@ -88,13 +95,42 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Tournois Challonge -->
+    <div v-if="challongeTournaments.length" class="mt-6">
+      <div class="d-flex align-center mb-3 gap-2">
+        <v-icon size="20" color="primary">mdi-tournament</v-icon>
+        <span class="text-subtitle-1 font-weight-medium">Tournois</span>
+      </div>
+      <v-row>
+        <v-col
+          v-for="t in challongeTournaments"
+          :key="t.challonge_slug"
+          cols="12" sm="6" md="4" lg="3"
+        >
+          <v-card
+            :to="`/season/${route.params.id}/tournaments/${t.challonge_slug}`"
+            hover
+            color="surface"
+            class="h-100"
+          >
+            <v-card-title class="text-body-1">{{ t.label || t.challonge_slug }}</v-card-title>
+            <v-card-text>
+              <v-chip size="small" color="primary" variant="tonal" prepend-icon="mdi-open-in-new">
+                Voir le bracket
+              </v-chip>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { getSeason } from "../api/index.js";
+import { getSeason, getSeasonTournaments } from "../api/index.js";
 import { matchScore } from "../utils/matchScore.js";
 
 const route = useRoute();
@@ -102,6 +138,7 @@ const loading = ref(true);
 const data = ref({ season: {}, matches: [], players: [] });
 const playerSearch = ref("");
 const matchSearch  = ref("");
+const challongeTournaments = ref([]);
 const playerSortBy = ref([{ key: "rating", order: "desc" }]);
 
 function applySort(items, sortBy) {
@@ -117,8 +154,12 @@ function applySort(items, sortBy) {
 }
 
 onMounted(async () => {
-  const { data: d } = await getSeason(route.params.id);
+  const [{ data: d }, { data: tournaments }] = await Promise.all([
+    getSeason(route.params.id),
+    getSeasonTournaments(route.params.id).catch(() => ({ data: [] })),
+  ]);
   data.value = d;
+  challongeTournaments.value = tournaments;
   loading.value = false;
 });
 

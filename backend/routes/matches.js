@@ -4,6 +4,25 @@ const { calcRating } = require("../utils/rating");
 
 const router = Router();
 
+// GET /api/matches/challonge/:challonge_id — find a G5 match by Challonge match ID
+router.get("/challonge/:challonge_id", async (req, res) => {
+  const { challonge_id } = req.params;
+  const [[match]] = await db.query(
+    `SELECT m.id, m.team1_score, m.team2_score, m.cancelled, m.forfeit,
+            t1.name AS team1_name, t2.name AS team2_name,
+            w.id AS winner_id
+     FROM \`match\` m
+     LEFT JOIN team t1 ON t1.id = m.team1_id
+     LEFT JOIN team t2 ON t2.id = m.team2_id
+     LEFT JOIN team w  ON w.id  = m.winner
+     WHERE m.challonge_id = ?
+     LIMIT 1`,
+    [challonge_id]
+  );
+  if (!match) return res.status(404).json({ error: "Match not found" });
+  res.json(match);
+});
+
 // GET /api/matches/:id
 router.get("/:id", async (req, res) => {
   const { id } = req.params;

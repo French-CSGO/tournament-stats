@@ -19,3 +19,6 @@ export const getAdminDemosBroken = (code) =>
   api.get("/admin/demos/broken", { headers: { "x-admin-code": code } });
 
 export const getMapRounds = (mapId) => api.get(`/rounds/${mapId}`);
+
+export const getSeasonTournaments = (seasonId) => api.get(`/tournaments/season/${seasonId}`);
+export const getTournament = (slug) => api.get(`/tournaments/${slug}`);
