@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.6.0] - 2026-05-26
+
+### Ajouté
+- **Redesign complet** — thème éditorial broadcast : fond très sombre (`#0a0a0b`), accent lime `#e6ff4d`, typographie Antonio / JetBrains Mono / Manrope
+- **Système de design** — `broadcast.css` : tokens CSS, composants (boutons, chips, tables, cards), breakpoints responsive
+- **MapPanel** — bannière procédurale HSL par map, grille de KPIs, scoreboards et timeline intégrés
+- **BroadcastTimeline** — barres de rounds par demi-temps, score en temps réel, tooltip interactif avec détail des kills (nom, victime, HS)
+- **StatsView** — podium top 3 avec `PodiumCard`, filtre équipe + seuil de rounds (slider), leaderboard triable par toutes les colonnes
+- **AdminView** — portail d'accès broadcast (mot de passe), compteurs démos manquantes / fichiers brisés, tableaux avec liens matchs
+- **SortTH** — composant de colonne de tableau triable réutilisable
+- **PodiumCard** — carte joueur podium avec rang, stats (RATING / K/D / ADR / HS) et couleur d'équipe
+- **Pagination** — liste des matchs d'une saison limitée à 10 par page avec contrôles PRÉC / SUIV et indicateur de page
+
+### Modifié
+- `App.vue` — barre broadcast avec horloge UTC live, dot ON AIR animé, navigation restructurée
+- `MatchView.vue` — hero versus complet, grille veto avec fond map procédural, onglets de maps
+- `SeasonsView.vue` — hero avec KPIs globaux, season strip, match live mis en avant, top frags + map pool
+
+### Technique
+- `utils/mapData.js` : `MAP_DATA`, `getTeamColor` (hash déterministe), `getTeamTag`, `getMapHue`, `ratingClass`, `formatReason`, `reasonGlyph`
+- Polices Google Fonts chargées dans `index.html` : Antonio, JetBrains Mono, Manrope, Newsreader
+
+---
+
 ## [0.5.0] - 2026-05-11
 
 ### Ajouté
