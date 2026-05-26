@@ -1,74 +1,99 @@
 <template>
-  <v-app>
-    <!-- App bar — mobile only -->
-    <v-app-bar v-if="mobile" color="surface" elevation="0" border="b">
-      <v-app-bar-nav-icon @click="drawer = !drawer" />
-      <v-app-bar-title class="text-subtitle-1 font-weight-medium">Tournament Stats</v-app-bar-title>
-    </v-app-bar>
+  <v-app theme="dark" class="broadcast-app">
+    <div class="broadcast-root grain">
+      <!-- Broadcast top bar -->
+      <header class="bcast-bar">
+        <span class="station">G5<span class="slash">/</span>STATS</span>
+        <span class="live"><span class="dot" />ON AIR</span>
+        <span class="time-cell">{{ utcTime }}</span>
+        <span class="ticker">
+          <div class="ticker-inner">
+            <span>TOURNAMENT STATS · <b>CS2 / CS:GO</b> · POWERED BY GET5</span>
+            <span>·</span>
+            <span>TOURNAMENT STATS · <b>CS2 / CS:GO</b> · POWERED BY GET5</span>
+            <span>·</span>
+          </div>
+        </span>
+        <span class="nav">
+          <router-link to="/" class="nav-link" :class="{ on: isHub }">HUB</router-link>
+          <router-link to="/stats" class="nav-link" :class="{ on: route.path.startsWith('/stats') }">STATS</router-link>
+          <router-link to="/admin" class="nav-link" :class="{ on: route.path.startsWith('/admin') }">ADMIN</router-link>
+        </span>
+      </header>
 
-    <v-navigation-drawer
-      v-model="drawer"
-      :permanent="!mobile"
-      :temporary="mobile"
-      :width="220"
-    >
-      <v-list-item title="Tournament Stats" subtitle="v0.5" class="py-4" />
-      <v-divider />
-      <v-list nav density="compact">
-        <v-list-item prepend-icon="mdi-trophy"         title="Saisons"      to="/" exact />
-        <v-list-item prepend-icon="mdi-shield-account" title="Équipes"      to="/teams" />
-        <v-list-item prepend-icon="mdi-chart-bar"      title="Statistiques" to="/stats" />
-      </v-list>
-
-      <template #append>
-        <v-divider />
-        <v-list nav density="compact">
-          <v-list-item
-            prepend-icon="mdi-history"
-            title="Changelog"
-            href="https://github.com/French-CSGO/tournament-stats/releases"
-            target="_blank"
-          />
-          <v-list-item prepend-icon="mdi-cog" title="Admin" to="/admin" />
-        </v-list>
-      </template>
-    </v-navigation-drawer>
-
-    <v-main>
-      <v-container fluid class="pa-4 pa-md-6">
+      <main>
         <router-view />
-      </v-container>
+      </main>
 
-      <v-footer
-        color="surface"
-        border="t"
-        app
-        class="text-caption text-medium-emphasis d-flex justify-space-between flex-wrap gap-2 px-6 py-3"
-      >
-        <span>Iwhite67</span>
+      <footer class="bcast-footer">
+        <span>
+          <span class="dim">BUILD</span> &nbsp;
+          G5-STATS / FRONT-END · {{ buildDate }}
+        </span>
+        <span>BUILT ON GET5 / G5API · TOURNAMENT STATS</span>
         <a
           href="https://github.com/French-CSGO/tournament-stats"
           target="_blank"
-          class="text-medium-emphasis text-decoration-none d-flex align-center gap-1"
+          style="display:flex;align-items:center;gap:6px;color:inherit;"
         >
-          <v-icon size="15">mdi-github</v-icon>
-          French-CSGO/tournament-stats
+          <span style="font-size:13px">⌥</span> French-CSGO/tournament-stats
         </a>
-        <span>v0.5</span>
-      </v-footer>
-    </v-main>
+      </footer>
+    </div>
   </v-app>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
-import { useDisplay } from "vuetify";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 
-const { mobile } = useDisplay();
-const drawer = ref(!mobile.value);
-const route  = useRoute();
+const route = useRoute();
+const utcTime = ref("--:--:-- UTC");
+const buildDate = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-watch(() => route.path, () => { if (mobile.value) drawer.value = false; });
-watch(mobile, (isMobile) => { drawer.value = !isMobile; });
+const isHub = computed(() =>
+  route.path === "/" || route.path.startsWith("/season")
+);
+
+let timer;
+function tick() {
+  const d = new Date();
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  const ss = String(d.getUTCSeconds()).padStart(2, "0");
+  utcTime.value = `${hh}:${mm}:${ss} UTC`;
+}
+onMounted(() => { tick(); timer = setInterval(tick, 1000); });
+onUnmounted(() => clearInterval(timer));
 </script>
+
+<style>
+.broadcast-app,
+.broadcast-app .v-application__wrap {
+  background: var(--bg-0) !important;
+  min-height: unset !important;
+}
+.broadcast-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-0);
+}
+.broadcast-root > main { flex: 1; }
+
+.bcast-bar .time-cell {
+  padding: 0 16px; height: 100%; display: flex; align-items: center;
+  border-right: 1px solid var(--line); min-width: 140px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3);
+}
+.nav-link {
+  padding: 0 18px; display: flex; align-items: center; height: 100%;
+  border-left: 1px solid var(--line); cursor: pointer;
+  transition: color .15s, background .15s;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-3); text-decoration: none;
+}
+.nav-link:hover { color: var(--ink); }
+.nav-link.on { color: #000; background: var(--accent); }
+.bcast-bar .dim { color: var(--ink-4); }
+</style>
