@@ -1,109 +1,174 @@
 <template>
   <div>
-    <h1 class="text-h5 mb-6">Administration</h1>
+    <!-- ACCESS GATE -->
+    <template v-if="!authenticated">
+      <section class="section" style="min-height:80vh;display:flex;align-items:center;justify-content:center">
+        <div style="width:480px;max-width:100%">
+          <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;color:var(--ink-3);margin-bottom:18px">
+            DOC.999 — ACCÈS RESTREINT
+          </div>
+          <h1 style="font-family:var(--font-display);font-size:64px;font-weight:600;line-height:0.9;margin:0 0 24px;text-transform:uppercase">
+            Accès<br /><span style="color:var(--accent)">Restreint</span>
+          </h1>
+          <p style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3);letter-spacing:0.08em;margin-bottom:32px;text-transform:uppercase;line-height:1.6">
+            Cette zone est réservée aux administrateurs.<br />Entrez votre code d'accès pour continuer.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;color:var(--ink-3)">
+              CODE D'ACCÈS
+            </div>
+            <input
+              type="password"
+              v-model="codeInput"
+              class="admin-input"
+              placeholder="••••••••••••"
+              autofocus
+              @keydown.enter="login"
+            />
+            <div v-if="loginError" style="font-family:var(--font-mono);font-size:11px;color:var(--danger);letter-spacing:0.12em">
+              CODE INCORRECT
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn primary" @click="login">↳ ACCÉDER</button>
+              <router-link to="/" class="btn ghost">ANNULER</router-link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
 
-    <!-- Code d'accès -->
-    <v-card v-if="!authenticated" color="surface" class="mx-auto" max-width="400">
-      <v-card-title>Accès restreint</v-card-title>
-      <v-card-text>
-        <v-text-field
-          v-model="codeInput"
-          label="Code d'accès"
-          type="password"
-          @keyup.enter="login"
-        />
-        <v-alert v-if="loginError" type="error" density="compact" class="mt-2">Code incorrect</v-alert>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="primary" @click="login">Accéder</v-btn>
-      </v-card-actions>
-    </v-card>
+    <!-- ADMIN PANEL -->
+    <template v-else>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">
+            <span style="color:var(--accent)">● DÉVERROUILLÉ · ADMIN</span>
+          </div>
+          <h1>
+            <div>CONTROL<span class="accent">/</span></div>
+            <div style="margin-top:0.18em">ROOM<span class="sub">— ops, démos, ingestion</span></div>
+          </h1>
+        </div>
+        <div class="meta-grid">
+          <div class="cell">
+            <div class="k">Démos manquantes</div>
+            <div class="v" :style="{ color: missing.length ? 'var(--warn)' : 'var(--good)' }">
+              {{ String(missing.length).padStart(2, "0") }}
+            </div>
+          </div>
+          <div class="cell">
+            <div class="k">Fichiers brisés</div>
+            <div class="v" :style="{ color: broken.length ? 'var(--danger)' : 'var(--good)' }">
+              {{ String(broken.length).padStart(2, "0") }}
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <!-- Panel admin -->
-    <div v-else>
-      <v-tabs v-model="tab" class="mb-4">
-        <v-tab value="missing">
-          <v-icon start>mdi-file-remove</v-icon>
-          Démos manquantes
-          <v-chip class="ml-2" size="x-small" color="error">{{ missing.length }}</v-chip>
-        </v-tab>
-        <v-tab value="broken">
-          <v-icon start>mdi-file-alert</v-icon>
-          Fichiers introuvables
-          <v-chip class="ml-2" size="x-small" color="warning">{{ broken.length }}</v-chip>
-        </v-tab>
-      </v-tabs>
-
-      <v-progress-circular v-if="loading" indeterminate />
-
-      <div v-if="tab === 'missing' && !loading">
-        <v-card color="surface">
-          <v-card-subtitle class="pa-3">Maps terminées sans démo enregistrée en base</v-card-subtitle>
-          <v-data-table
-            :headers="demoHeaders"
-            :items="missing"
-            density="compact"
-            :items-per-page="25"
-          >
-            <template #item.match_id="{ item }">
-              <router-link :to="`/match/${item.match_id}`" class="text-primary">
-                #{{ item.match_id }}
-              </router-link>
-            </template>
-            <template #item.score="{ item }">
-              {{ item.team1_name }} {{ item.team1_score }}–{{ item.team2_score }} {{ item.team2_name }}
-            </template>
-            <template #item.end_time="{ item }">
-              {{ formatDate(item.end_time) }}
-            </template>
-          </v-data-table>
-        </v-card>
+      <!-- TABS -->
+      <div class="season-strip">
+        <div class="item" :class="{ on: activeTab === 'missing' }" @click="activeTab = 'missing'">
+          <div class="sub">MANQUANTES</div>
+          <div class="label" style="font-size:18px">DÉMOS</div>
+          <div class="stat">{{ missing.length }} MAPS SANS DÉMO</div>
+        </div>
+        <div class="item" :class="{ on: activeTab === 'broken' }" @click="activeTab = 'broken'">
+          <div class="sub">INTROUVABLES</div>
+          <div class="label" style="font-size:18px">FICHIERS</div>
+          <div class="stat">{{ broken.length }} RÉFÉRENCES BRISÉES</div>
+        </div>
       </div>
 
-      <div v-if="tab === 'broken' && !loading">
-        <v-card color="surface">
-          <v-card-subtitle class="pa-3">Démo référencée en base mais fichier absent sur le serveur</v-card-subtitle>
-          <v-data-table
-            :headers="brokenHeaders"
-            :items="broken"
-            density="compact"
-            :items-per-page="25"
-          >
-            <template #item.match_id="{ item }">
-              <router-link :to="`/match/${item.match_id}`" class="text-primary">
-                #{{ item.match_id }}
-              </router-link>
-            </template>
-            <template #item.score="{ item }">
-              {{ item.team1_name }} {{ item.team1_score }}–{{ item.team2_score }} {{ item.team2_name }}
-            </template>
-            <template #item.end_time="{ item }">
-              {{ formatDate(item.end_time) }}
-            </template>
-          </v-data-table>
-        </v-card>
+      <div v-if="loading" class="section">
+        <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;color:var(--ink-3)">
+          CHARGEMENT…
+        </div>
       </div>
-    </div>
+
+      <section v-else class="section">
+        <div class="section-head">
+          <h2>{{ activeTab === 'missing' ? 'Démos manquantes' : 'Fichiers introuvables' }}</h2>
+          <div class="right">
+            <span class="index">— PG. 02</span>
+          </div>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>MATCH</th>
+              <th>MAP</th>
+              <th class="num">SCORE</th>
+              <th class="num">DATE</th>
+              <th v-if="activeTab === 'broken'">FICHIER</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-if="activeTab === 'missing' && missing.length">
+              <tr v-for="row in missing" :key="row.match_id + '-' + row.map_name">
+                <td>
+                  <router-link :to="`/match/${row.match_id}`" style="color:var(--accent)">
+                    #{{ row.match_id }}
+                  </router-link>
+                </td>
+                <td style="font-family:var(--font-display);letter-spacing:0.02em;text-transform:uppercase">{{ row.map_name }}</td>
+                <td class="num dim">{{ row.team1_name }} {{ row.team1_score }}–{{ row.team2_score }} {{ row.team2_name }}</td>
+                <td class="num dim">{{ fmtDate(row.end_time) }}</td>
+              </tr>
+            </template>
+            <template v-else-if="activeTab === 'broken' && broken.length">
+              <tr v-for="row in broken" :key="row.match_id + '-' + row.map_name">
+                <td>
+                  <router-link :to="`/match/${row.match_id}`" style="color:var(--accent)">
+                    #{{ row.match_id }}
+                  </router-link>
+                </td>
+                <td style="font-family:var(--font-display);letter-spacing:0.02em;text-transform:uppercase">{{ row.map_name }}</td>
+                <td class="num dim">{{ row.team1_name }} {{ row.team1_score }}–{{ row.team2_score }} {{ row.team2_name }}</td>
+                <td class="num dim">{{ fmtDate(row.end_time) }}</td>
+                <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-3)">{{ row.demoFile }}</span></td>
+              </tr>
+            </template>
+            <tr v-else>
+              <td colspan="5" style="text-align:center;padding:48px;font-family:var(--font-mono);color:var(--ink-4);letter-spacing:0.12em">
+                <div style="font-family:var(--font-display);font-size:56px;color:var(--ink-4);margin-bottom:12px">—</div>
+                AUCUNE ENTRÉE
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Logout -->
+      <div class="section" style="padding-top:0;border-bottom:none">
+        <button class="btn ghost" @click="logout">↳ SE DÉCONNECTER</button>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { getAdminDemosMissing, getAdminDemosBroken } from "../api/index.js";
 
-const codeInput   = ref("");
-const loginError  = ref(false);
+const codeInput    = ref("");
+const loginError   = ref(false);
 const authenticated = ref(false);
-const tab         = ref("missing");
-const loading     = ref(false);
-const missing     = ref([]);
-const broken      = ref([]);
+const activeTab    = ref("missing");
+const loading      = ref(false);
+const missing      = ref([]);
+const broken       = ref([]);
 
 const STORAGE_KEY = "admin_code";
 
 function login() {
   loginError.value = false;
   loadData(codeInput.value);
+}
+
+function logout() {
+  authenticated.value = false;
+  localStorage.removeItem(STORAGE_KEY);
+  codeInput.value = "";
 }
 
 async function loadData(code) {
@@ -124,25 +189,11 @@ async function loadData(code) {
   }
 }
 
-// Restaure la session si code déjà sauvegardé
+function fmtDate(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 const saved = localStorage.getItem(STORAGE_KEY);
 if (saved) loadData(saved);
-
-const demoHeaders = [
-  { title: "Match", key: "match_id", sortable: true },
-  { title: "Map", key: "map_name", sortable: true },
-  { title: "Score", key: "score", sortable: false },
-  { title: "Date", key: "end_time", sortable: true },
-];
-
-const brokenHeaders = [
-  { title: "Match", key: "match_id", sortable: true },
-  { title: "Map", key: "map_name", sortable: true },
-  { title: "Score", key: "score", sortable: false },
-  { title: "Fichier", key: "demoFile", sortable: false },
-  { title: "Date", key: "end_time", sortable: true },
-];
-
-const formatDate = (d) =>
-  d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 </script>
