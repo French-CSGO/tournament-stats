@@ -116,7 +116,7 @@
       </div>
       <div>
         <div
-          v-for="m in seasonMatches"
+          v-for="m in pagedMatches"
           :key="m.id"
           class="match-row"
           :class="{ live: isLive(m) }"
@@ -160,6 +160,25 @@
           </div>
           <div class="arrow">→</div>
         </div>
+      </div>
+
+      <!-- PAGINATION -->
+      <div v-if="totalPages > 1" class="pagination">
+        <button
+          class="btn ghost"
+          :disabled="currentPage === 1"
+          @click="currentPage--"
+        >← PRÉC</button>
+        <div class="page-info">
+          <span class="cur">{{ String(currentPage).padStart(2, "0") }}</span>
+          <span class="sep"> / </span>
+          <span class="tot">{{ String(totalPages).padStart(2, "0") }}</span>
+        </div>
+        <button
+          class="btn ghost"
+          :disabled="currentPage === totalPages"
+          @click="currentPage++"
+        >SUIV →</button>
       </div>
     </section>
 
@@ -248,7 +267,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { getSeasons, getSeason, getStats } from "../api/index.js";
 import { getTeamColor, getTeamTag, getMapHue, ratingClass } from "../utils/mapData.js";
@@ -258,11 +277,20 @@ const seasons = ref([]);
 const selectedSeasonId = ref(null);
 const seasonMatches = ref([]);
 const seasonLoading = ref(false);
+const currentPage = ref(1);
+const PAGE_SIZE = 10;
 const topPlayers = ref([]);
 const mapStats = ref([]);
 const kpis = ref({ totalMatches: 0, mapsPlayed: 0, totalKills: 0, avgAdr: 0 });
 
 const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+const pagedMatches = computed(() =>
+  seasonMatches.value.slice((currentPage.value - 1) * PAGE_SIZE, currentPage.value * PAGE_SIZE)
+);
+const totalPages = computed(() => Math.ceil(seasonMatches.value.length / PAGE_SIZE));
+
+watch(seasonMatches, () => { currentPage.value = 1; });
 
 const liveMatch = computed(() =>
   seasonMatches.value.find(m => isLive(m))
@@ -345,6 +373,31 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 0 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
+.pagination .btn[disabled] {
+  opacity: 0.3;
+  pointer-events: none;
+}
+.page-info {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+.page-info .cur {
+  font-size: 18px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .map-bg {
   background:
     radial-gradient(120% 80% at 20% 110%, hsla(var(--h),60%,55%,0.7), transparent 60%),
