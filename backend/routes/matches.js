@@ -31,6 +31,7 @@ router.get("/:id", async (req, res) => {
     `SELECT m.id, m.start_time, m.end_time, m.team1_score, m.team2_score,
             m.team1_series_score, m.team2_series_score,
             m.cancelled, m.forfeit, m.max_maps, m.veto_mappool,
+            m.challonge_id,
             t1.id AS team1_id, t1.name AS team1_name, t1.logo AS team1_logo,
             t2.id AS team2_id, t2.name AS team2_name, t2.logo AS team2_logo,
             w.id  AS winner_id,
