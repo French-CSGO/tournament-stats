@@ -27,10 +27,18 @@ router.get("/:id", async (req, res) => {
   );
   if (!season) return res.status(404).json({ error: "Season not found" });
 
+  const [brackets] = await db.query(
+    `SELECT id, challonge_slug, label, display_order
+     FROM season_challonge_tournament
+     WHERE season_id = ?
+     ORDER BY display_order, id`,
+    [id]
+  );
+
   const [matches] = await db.query(
     `SELECT m.id, m.start_time, m.end_time, m.team1_score, m.team2_score,
             m.team1_series_score, m.team2_series_score,
-            m.cancelled, m.forfeit, m.max_maps, m.challonge_id,
+            m.cancelled, m.forfeit, m.max_maps, m.challonge_id, m.challonge_slug,
             t1.id AS team1_id, t1.name AS team1_name, t1.logo AS team1_logo,
             t2.id AS team2_id, t2.name AS team2_name, t2.logo AS team2_logo,
             w.id  AS winner_id,
@@ -78,7 +86,7 @@ router.get("/:id", async (req, res) => {
     .map((p) => ({ ...p, rating: calcRating(p) }))
     .sort((a, b) => b.rating - a.rating);
 
-  res.json({ season, matches, players: playersWithRating });
+  res.json({ season, brackets, matches, players: playersWithRating });
 });
 
 module.exports = router;
