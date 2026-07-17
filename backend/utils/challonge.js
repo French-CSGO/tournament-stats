@@ -11,6 +11,8 @@ let apiKeyFetchedAt = 0;
 const API_KEY_TTL   = 5 * 60 * 1000;
 
 async function getApiKey() {
+  if (process.env.CHALLONGE_API_KEY) return process.env.CHALLONGE_API_KEY;
+
   if (cachedApiKey && Date.now() - apiKeyFetchedAt < API_KEY_TTL) return cachedApiKey;
   const [[row]] = await db.query(
     "SELECT setting_value FROM settings WHERE setting_key = 'challonge.apiKey' LIMIT 1"
