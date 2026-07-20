@@ -304,13 +304,14 @@ function series(m) {
   const a = m.team1_series_score ?? 0;
   const b = m.team2_series_score ?? 0;
   if (a || b) return { a, b };
-  // BO1: derive from direct score
+  // BO1: derive from direct map score
   if (m.max_maps === 1) {
     const t1 = m.map1_team1_score ?? 0;
     const t2 = m.map1_team2_score ?? 0;
     return { a: t1 > t2 ? 1 : 0, b: t2 > t1 ? 1 : 0 };
   }
-  return { a, b };
+  // BO3/BO5: fall back to the match-level series score
+  return { a: m.team1_score ?? 0, b: m.team2_score ?? 0 };
 }
 
 function formatBig(n) {
