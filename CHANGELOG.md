@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0] - 2026-07-21
+
+### Ajouté
+- **Système de clés API** : toutes les routes `/api/*` (hors `/api/demos`) exigent désormais une clé API (`X-Api-Key` / `Authorization: Bearer`), avec création, listing et révocation depuis l'onglet « Clés API » de la page Admin
+- **Rate limiting par clé** : quota configurable de requêtes/minute par clé API (60 par défaut), réponse `429` avec en-têtes `RateLimit-*` en cas de dépassement
+- **Documentation API interactive** : spec OpenAPI 3 servie via Swagger UI sur `/api/docs`
+- Clé API « interne » (`INTERNAL_API_KEY`) injectée côté serveur par Nginx (prod) et le proxy Vite (dev) pour le frontend, sans jamais exposer la clé au navigateur
+
 ## [0.5.0] - 2026-05-11
 
 ### Ajouté

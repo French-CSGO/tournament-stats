@@ -1,0 +1,191 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Tournament Stats API",
+    "version": "1.0.0",
+    "description": "API publique en lecture pour les statistiques de tournois CS:GO/CS2 (saisons, matchs, équipes, joueurs, rounds, brackets Challonge).\n\n### Authentification\nToutes les routes `/api/*` (hors `/api/demos`) requièrent une clé API envoyée dans l'en-tête `X-Api-Key` (ou `Authorization: Bearer <clé>`).\n\n### Rate limiting\nChaque clé dispose d'un quota de requêtes par minute (par défaut 60). Les en-têtes `RateLimit-*` sont renvoyés sur chaque réponse ; un dépassement renvoie `429 Too Many Requests`.\n\nContactez un administrateur pour obtenir une clé API."
+  },
+  "servers": [
+    { "url": "/api", "description": "Base de l'API" }
+  ],
+  "security": [{ "ApiKeyAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Clé API manquante ou invalide",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+      },
+      "TooManyRequests": {
+        "description": "Quota de requêtes par minute dépassé",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+      },
+      "NotFound": {
+        "description": "Ressource introuvable",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+      }
+    }
+  },
+  "paths": {
+    "/seasons": {
+      "get": {
+        "summary": "Liste des saisons",
+        "tags": ["Seasons"],
+        "responses": {
+          "200": { "description": "Liste des saisons avec nombre de matchs" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/seasons/{id}": {
+      "get": {
+        "summary": "Détail d'une saison (matchs + classement joueurs)",
+        "tags": ["Seasons"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Saison, brackets, matchs et joueurs" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/matches/{id}": {
+      "get": {
+        "summary": "Détail d'un match (maps, vetos, stats joueurs)",
+        "tags": ["Matches"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Match, maps et vetos" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/matches/challonge/{challonge_id}": {
+      "get": {
+        "summary": "Retrouve un match G5 depuis un ID de match Challonge",
+        "tags": ["Matches"],
+        "parameters": [
+          { "name": "challonge_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Match trouvé" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/teams": {
+      "get": {
+        "summary": "Liste des équipes",
+        "tags": ["Teams"],
+        "responses": {
+          "200": { "description": "Liste des équipes avec nombre de matchs" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/teams/{id}": {
+      "get": {
+        "summary": "Détail d'une équipe (matchs + joueurs)",
+        "tags": ["Teams"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "season_id", "in": "query", "required": false, "schema": { "type": "integer" }, "description": "Filtre les matchs sur une saison" }
+        ],
+        "responses": {
+          "200": { "description": "Équipe, matchs et joueurs" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/players/{steamId}/avatar": {
+      "get": {
+        "summary": "Redirige vers l'avatar Steam d'un joueur",
+        "tags": ["Players"],
+        "parameters": [
+          { "name": "steamId", "in": "path", "required": true, "schema": { "type": "string", "pattern": "^\\d{17}$" } }
+        ],
+        "responses": {
+          "302": { "description": "Redirection vers l'image d'avatar" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "summary": "Statistiques agrégées (KPIs, top joueurs, maps, armes)",
+        "tags": ["Stats"],
+        "parameters": [
+          { "name": "season_id", "in": "query", "required": false, "schema": { "type": "integer" }, "description": "Filtre sur une saison" }
+        ],
+        "responses": {
+          "200": { "description": "KPIs globaux, classement joueurs, stats par map et par arme" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/rounds/{map_id}": {
+      "get": {
+        "summary": "Timeline des rounds d'une map",
+        "tags": ["Rounds"],
+        "parameters": [
+          { "name": "map_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Liste des rounds avec vainqueur, raison et kills" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/tournaments/season/{id}": {
+      "get": {
+        "summary": "Tournois Challonge liés à une saison",
+        "tags": ["Tournaments"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Liste des tournois (slug Challonge, libellé)" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/tournaments/{slug}": {
+      "get": {
+        "summary": "Bracket complet d'un tournoi Challonge (mis en cache 30 min)",
+        "tags": ["Tournaments"],
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Tournoi, participants et matchs" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  }
+}

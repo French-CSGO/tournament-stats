@@ -2,6 +2,7 @@ const { Router } = require("express");
 const db = require("../db");
 const fs = require("fs");
 const path = require("path");
+const apiKeys = require("../utils/apiKeys");
 
 const router = Router();
 const DEMOS_DIR = path.resolve("public/demos");
@@ -48,6 +49,35 @@ router.get("/demos/broken", async (req, res) => {
   `);
   const broken = rows.filter(r => !fs.existsSync(path.join(DEMOS_DIR, r.demoFile)));
   res.json(broken);
+});
+
+// ── Gestion des clés API ────────────────────────────────────────────────
+
+// GET /api/admin/keys — liste des clés (jamais la valeur brute)
+router.get("/keys", async (req, res) => {
+  if (!auth(req, res)) return;
+  const keys = await apiKeys.listKeys();
+  res.json(keys);
+});
+
+// POST /api/admin/keys — crée une clé, renvoie la valeur brute une seule fois
+router.post("/keys", async (req, res) => {
+  if (!auth(req, res)) return;
+  const { label, rate_limit_per_min } = req.body || {};
+  if (!label || !label.trim()) {
+    return res.status(400).json({ error: "label is required" });
+  }
+  const rateLimit = parseInt(rate_limit_per_min) || apiKeys.DEFAULT_RATE_LIMIT;
+  const created = await apiKeys.createKey(label.trim(), rateLimit);
+  res.status(201).json(created);
+});
+
+// DELETE /api/admin/keys/:id — révoque une clé
+router.delete("/keys/:id", async (req, res) => {
+  if (!auth(req, res)) return;
+  const ok = await apiKeys.revokeKey(req.params.id);
+  if (!ok) return res.status(404).json({ error: "Key not found" });
+  res.json({ ok: true });
 });
 
 module.exports = router;
