@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.6.0] - 2026-07-21
+## [0.7.0] - 2026-07-21
 
 ### Ajouté
 - **Système de clés API** : toutes les routes `/api/*` (hors `/api/demos`) exigent désormais une clé API (`X-Api-Key` / `Authorization: Bearer`), avec création, listing et révocation depuis l'onglet « Clés API » de la page Admin
