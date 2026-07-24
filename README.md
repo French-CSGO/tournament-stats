@@ -54,9 +54,18 @@ PUBLIC_URL=https://stats.yourdomain.com
 # Code d'accès à la page admin
 ADMIN_CODE=changeme
 
-# Clé API "interne" utilisée par le frontend pour appeler /api/* (voir
-# section "API — authentification par clé & rate limiting" ci-dessous).
-# Même valeur à définir sur le conteneur frontend.
+# Voir section "API — authentification par clé & rate limiting" ci-dessous.
+# DOIT être identique à DBKEY / server.dbKey côté G5API : c'est ce qui permet
+# de déchiffrer les clés API déjà stockées dans user.api_key (aucune écriture
+# n'est faite dans cette base, qui peut être une réplique en lecture seule).
+G5API_DB_KEY=
+
+# Quota de requêtes/minute par clé API "utilisateur G5API"
+API_KEY_RATE_LIMIT_PER_MIN=60
+
+# Clé API "interne" utilisée par le frontend pour appeler /api/* — un simple
+# secret partagé (pas une clé G5API), jamais stocké en base. Même valeur à
+# définir sur le conteneur frontend.
 INTERNAL_API_KEY=changeme
 INTERNAL_API_KEY_RATE_LIMIT=6000
 ```
@@ -117,7 +126,7 @@ npm run dev            # Vite sur :5173
 | GET | `/api/stats` | Statistiques agrégées | ✅ |
 | GET | `/api/rounds/:map_id` | Timeline des rounds | ✅ |
 | GET | `/api/tournaments/:slug` | Bracket Challonge | ✅ |
-| GET/POST/DELETE | `/api/admin/*` | Admin (démos, clés API) | ✅ + `x-admin-code` |
+| GET | `/api/admin/*` | Admin (démos, comptes avec clé API) | ✅ + `x-admin-code` |
 | POST | `/api/demos` | Upload de démo (token G5API requis) | ❌ |
 | GET | `/api/demos/:filename` | Téléchargement public d'une démo | ❌ |
 | GET | `/api/docs` | Documentation interactive (Swagger UI) | ❌ |
@@ -129,10 +138,14 @@ Liste complète, schémas et exemples : voir `/api/docs` (Swagger UI, générée
 
 Toutes les routes `/api/*` (à l'exception de `/api/demos`, qui garde son propre système de token pour G5API) exigent une clé API valide.
 
-- **Envoi de la clé** : en-tête `X-Api-Key: <clé>` ou `Authorization: Bearer <clé>`.
-- **Génération / révocation** : depuis la page Admin du frontend (onglet « Clés API »), ou directement via `/api/admin/keys` (protégé par `x-admin-code`). La clé brute n'est affichée qu'une seule fois à la création — seul un hash SHA-256 est conservé en base.
-- **Rate limiting** : chaque clé a son propre quota de requêtes par minute (60 par défaut, configurable à la création). Les en-têtes `RateLimit-*` sont renvoyés sur chaque réponse ; un dépassement renvoie `429 Too Many Requests`.
-- **Frontend** : le SPA appelle `/api/*` via le proxy Nginx (prod) ou Vite (dev), qui injecte automatiquement une clé « interne » (`INTERNAL_API_KEY`) côté serveur — le navigateur ne voit jamais cette clé. Le backend la reconnaît comme une clé API normale (visible et révocable dans l'onglet « Clés API »), avec un quota par défaut plus élevé (`INTERNAL_API_KEY_RATE_LIMIT`).
+Ce backend **ne gère pas ses propres clés** : la base de données à laquelle il se connecte peut être une réplique en lecture seule (voir [Réplication MariaDB LAN → VPS](#réplication-mariadb-lan--vps)), donc aucune écriture (création de table, `INSERT`, `UPDATE`) n'y est jamais faite. À la place, il réutilise les clés déjà émises par **G5API** :
+
+- **Format de la clé** : G5API stocke, pour chaque utilisateur, une clé API chiffrée (AES-OFB) dans `user.api_key`, et l'affiche à l'utilisateur sous la forme `<id>:<clé déchiffrée>` (son en-tête `user-api`). C'est exactement cette valeur qu'il faut envoyer ici.
+- **Envoi de la clé** : en-tête `X-Api-Key: <id>:<clé>` ou `Authorization: Bearer <id>:<clé>`.
+- **Déchiffrement** : le backend lit `user.api_key` (lecture seule) et le déchiffre avec `G5API_DB_KEY`, qui **doit être identique** à `DBKEY` / `server.dbKey` côté G5API. Sans cette valeur, ou si elle diffère, aucune clé ne peut être validée.
+- **Création / révocation** : entièrement gérées côté G5API (page « Utilisateurs ») — cette application ne fait que vérifier une clé existante. La page Admin (onglet « Clés API ») liste, en lecture seule, les comptes G5API qui en disposent.
+- **Rate limiting** : chaque clé a son propre quota de requêtes par minute (`API_KEY_RATE_LIMIT_PER_MIN`, 60 par défaut — un seul quota global, pas de configuration par clé). Les en-têtes `RateLimit-*` sont renvoyés sur chaque réponse ; un dépassement renvoie `429 Too Many Requests`.
+- **Frontend** : le SPA appelle `/api/*` via le proxy Nginx (prod) ou Vite (dev), qui injecte automatiquement une clé « interne » (`INTERNAL_API_KEY`) côté serveur — le navigateur ne voit jamais cette clé. Il ne s'agit pas d'une clé G5API : c'est un simple secret partagé, comparé directement et jamais stocké en base, avec son propre quota (`INTERNAL_API_KEY_RATE_LIMIT`).
 
 ## CI / Images Docker
 

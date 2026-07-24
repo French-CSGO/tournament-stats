@@ -80,7 +80,7 @@
         <div class="item" :class="{ on: activeTab === 'keys' }" @click="activeTab = 'keys'; loadKeys()">
           <div class="sub">ACCÈS</div>
           <div class="label" style="font-size:18px">CLÉS API</div>
-          <div class="stat">{{ apiKeysList.length }} CLÉ(S) ENREGISTRÉE(S)</div>
+          <div class="stat">{{ apiUsers.length }} COMPTE(S) AVEC CLÉ</div>
         </div>
       </div>
 
@@ -101,61 +101,30 @@
         <p style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:0.06em;margin-bottom:20px">
           Toutes les routes <code>/api/*</code> (hors upload de démos) exigent une clé API envoyée
           via l'en-tête <code>X-Api-Key</code>, avec un quota de requêtes/minute par clé.
-          Voir <a href="/api/docs" target="_blank" style="color:var(--accent)">/api/docs</a> pour la documentation complète.
+          Les clés sont celles déjà émises par <strong>G5API</strong> (page « Utilisateurs »),
+          au format <code>&lt;id&gt;:&lt;clé&gt;</code> — cette page se contente de lister,
+          en lecture seule, les comptes qui en disposent. Voir
+          <a href="/api/docs" target="_blank" style="color:var(--accent)">/api/docs</a> pour la documentation complète.
         </p>
-
-        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:24px">
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;color:var(--ink-3)">LIBELLÉ</label>
-            <input v-model="newKeyLabel" class="admin-input" placeholder="ex: partenaire-discord-bot" style="width:260px" />
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <label style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;color:var(--ink-3)">QUOTA / MIN</label>
-            <input v-model.number="newKeyRateLimit" type="number" min="1" class="admin-input" style="width:120px" />
-          </div>
-          <button class="btn primary" :disabled="!newKeyLabel.trim() || creatingKey" @click="createKey">↳ GÉNÉRER</button>
-        </div>
-
-        <div v-if="revealedKey" style="border:1px solid var(--accent);padding:16px;margin-bottom:24px;font-family:var(--font-mono)">
-          <div style="font-size:10px;letter-spacing:0.12em;color:var(--warn);margin-bottom:8px">
-            CETTE CLÉ NE SERA PLUS JAMAIS AFFICHÉE — COPIEZ-LA MAINTENANT
-          </div>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-            <code style="font-size:13px;word-break:break-all">{{ revealedKey }}</code>
-            <button class="btn ghost" @click="copyKey">{{ copied ? '✓ COPIÉ' : 'COPIER' }}</button>
-          </div>
-        </div>
 
         <table class="table">
           <thead>
             <tr>
-              <th>LIBELLÉ</th>
-              <th>APERÇU</th>
-              <th class="num">QUOTA/MIN</th>
-              <th>STATUT</th>
-              <th class="num">DERNIER USAGE</th>
-              <th></th>
+              <th>NOM</th>
+              <th>STEAM ID</th>
+              <th>RÔLE</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="k in apiKeysList" :key="k.id">
-              <td style="font-family:var(--font-display);letter-spacing:0.02em">{{ k.label }}</td>
-              <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">{{ k.key_preview }}</span></td>
-              <td class="num dim">{{ k.rate_limit_per_min }}</td>
-              <td>
-                <span :style="{ color: k.active ? 'var(--good)' : 'var(--danger)' }">
-                  {{ k.active ? 'ACTIVE' : 'RÉVOQUÉE' }}
-                </span>
-              </td>
-              <td class="num dim">{{ fmtDate(k.last_used_at) }}</td>
-              <td>
-                <button v-if="k.active" class="btn ghost" @click="revoke(k.id)">RÉVOQUER</button>
-              </td>
+            <tr v-for="u in apiUsers" :key="u.id">
+              <td style="font-family:var(--font-display);letter-spacing:0.02em">{{ u.name || '—' }}</td>
+              <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">{{ u.steam_id }}</span></td>
+              <td class="dim">{{ u.super_admin ? 'SUPER ADMIN' : (u.admin ? 'ADMIN' : '—') }}</td>
             </tr>
-            <tr v-if="!apiKeysList.length">
-              <td colspan="6" style="text-align:center;padding:48px;font-family:var(--font-mono);color:var(--ink-4);letter-spacing:0.12em">
+            <tr v-if="!apiUsers.length">
+              <td colspan="3" style="text-align:center;padding:48px;font-family:var(--font-mono);color:var(--ink-4);letter-spacing:0.12em">
                 <div style="font-family:var(--font-display);font-size:56px;color:var(--ink-4);margin-bottom:12px">—</div>
-                AUCUNE CLÉ
+                AUCUN COMPTE AVEC CLÉ API
               </td>
             </tr>
           </tbody>
@@ -229,8 +198,6 @@ import {
   getAdminDemosMissing,
   getAdminDemosBroken,
   getAdminApiKeys,
-  createAdminApiKey,
-  revokeAdminApiKey,
 } from "../api/index.js";
 
 const codeInput    = ref("");
@@ -241,12 +208,7 @@ const loading      = ref(false);
 const missing      = ref([]);
 const broken       = ref([]);
 
-const apiKeysList     = ref([]);
-const newKeyLabel     = ref("");
-const newKeyRateLimit = ref(60);
-const creatingKey     = ref(false);
-const revealedKey     = ref("");
-const copied          = ref(false);
+const apiUsers = ref([]);
 
 const STORAGE_KEY = "admin_code";
 
@@ -282,34 +244,7 @@ async function loadData(code) {
 async function loadKeys() {
   const code = localStorage.getItem(STORAGE_KEY);
   const { data } = await getAdminApiKeys(code);
-  apiKeysList.value = data;
-}
-
-async function createKey() {
-  creatingKey.value = true;
-  revealedKey.value = "";
-  copied.value = false;
-  try {
-    const code = localStorage.getItem(STORAGE_KEY);
-    const { data } = await createAdminApiKey(code, newKeyLabel.value.trim(), newKeyRateLimit.value);
-    revealedKey.value = data.rawKey;
-    newKeyLabel.value = "";
-    newKeyRateLimit.value = 60;
-    await loadKeys();
-  } finally {
-    creatingKey.value = false;
-  }
-}
-
-async function copyKey() {
-  await navigator.clipboard.writeText(revealedKey.value);
-  copied.value = true;
-}
-
-async function revoke(id) {
-  const code = localStorage.getItem(STORAGE_KEY);
-  await revokeAdminApiKey(code, id);
-  await loadKeys();
+  apiUsers.value = data;
 }
 
 function fmtDate(d) {

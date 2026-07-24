@@ -3,10 +3,11 @@
 ## [0.7.0] - 2026-07-21
 
 ### Ajouté
-- **Système de clés API** : toutes les routes `/api/*` (hors `/api/demos`) exigent désormais une clé API (`X-Api-Key` / `Authorization: Bearer`), avec création, listing et révocation depuis l'onglet « Clés API » de la page Admin
-- **Rate limiting par clé** : quota configurable de requêtes/minute par clé API (60 par défaut), réponse `429` avec en-têtes `RateLimit-*` en cas de dépassement
+- **Authentification par clé API** : toutes les routes `/api/*` (hors `/api/demos`) exigent désormais une clé API (`X-Api-Key` / `Authorization: Bearer`). Aucune clé n'est créée ni stockée par ce backend (la BDD peut être une réplique en lecture seule) — les clés déjà émises par G5API (`user.api_key`, chiffrées) sont réutilisées telles quelles, au format `<id>:<clé>`
+- **Rate limiting par clé** : quota de requêtes/minute par clé (60 par défaut), réponse `429` avec en-têtes `RateLimit-*` en cas de dépassement
 - **Documentation API interactive** : spec OpenAPI 3 servie via Swagger UI sur `/api/docs`
-- Clé API « interne » (`INTERNAL_API_KEY`) injectée côté serveur par Nginx (prod) et le proxy Vite (dev) pour le frontend, sans jamais exposer la clé au navigateur
+- Onglet « Clés API » dans la page Admin : liste en lecture seule des comptes G5API disposant d'une clé
+- Clé API « interne » (`INTERNAL_API_KEY`, simple secret partagé — pas une clé G5API) injectée côté serveur par Nginx (prod) et le proxy Vite (dev) pour le frontend, sans jamais exposer la clé au navigateur ni l'écrire en base
 
 ## [0.5.0] - 2026-05-11
 

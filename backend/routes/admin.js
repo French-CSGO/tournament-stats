@@ -51,33 +51,18 @@ router.get("/demos/broken", async (req, res) => {
   res.json(broken);
 });
 
-// ── Gestion des clés API ────────────────────────────────────────────────
+// ── Clés API ─────────────────────────────────────────────────────────────
+// Les clés API sont celles déjà émises par G5API (colonne user.api_key,
+// chiffrée) — cette base étant une réplique en lecture seule, on ne peut
+// ni en créer ni en révoquer ici. Cette route liste, en lecture seule,
+// les comptes G5API disposant d'une clé (gestion réelle : page
+// "Utilisateurs" de G5API).
 
-// GET /api/admin/keys — liste des clés (jamais la valeur brute)
+// GET /api/admin/keys — comptes G5API avec une clé API active
 router.get("/keys", async (req, res) => {
   if (!auth(req, res)) return;
-  const keys = await apiKeys.listKeys();
-  res.json(keys);
-});
-
-// POST /api/admin/keys — crée une clé, renvoie la valeur brute une seule fois
-router.post("/keys", async (req, res) => {
-  if (!auth(req, res)) return;
-  const { label, rate_limit_per_min } = req.body || {};
-  if (!label || !label.trim()) {
-    return res.status(400).json({ error: "label is required" });
-  }
-  const rateLimit = parseInt(rate_limit_per_min) || apiKeys.DEFAULT_RATE_LIMIT;
-  const created = await apiKeys.createKey(label.trim(), rateLimit);
-  res.status(201).json(created);
-});
-
-// DELETE /api/admin/keys/:id — révoque une clé
-router.delete("/keys/:id", async (req, res) => {
-  if (!auth(req, res)) return;
-  const ok = await apiKeys.revokeKey(req.params.id);
-  if (!ok) return res.status(404).json({ error: "Key not found" });
-  res.json({ ok: true });
+  const users = await apiKeys.listApiUsers();
+  res.json(users);
 });
 
 module.exports = router;

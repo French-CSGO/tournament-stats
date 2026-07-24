@@ -1,114 +1,71 @@
 const crypto = require("crypto");
 const db = require("../db");
 
-const KEY_PREFIX = "tsk";
-const DEFAULT_RATE_LIMIT = 60; // requests per minute
+const DEFAULT_RATE_LIMIT = parseInt(process.env.API_KEY_RATE_LIMIT_PER_MIN) || 60;
+const INTERNAL_RATE_LIMIT = parseInt(process.env.INTERNAL_API_KEY_RATE_LIMIT) || 6000;
 
-function generateRawKey() {
-  return `${KEY_PREFIX}_${crypto.randomBytes(24).toString("hex")}`;
+// This app has no database of its own for API keys — the DB it talks to is a
+// read-only replica (see setup/README.md). Instead we reuse the API keys
+// G5API already issues: every G5API `user` row has an `api_key` column,
+// AES-OFB encrypted with `server.dbKey` (aes-js, see G5API's Utils.encrypt).
+// G5API's own "user-api" header format is "<user.id>:<decryptedKey>" — the
+// exact string a user copies from their G5API profile — so we accept that
+// same format and never write anything back to the DB.
+
+function decryptG5ApiKey(hexSource, dbKey) {
+  if (!hexSource || hexSource.length <= 32) return null;
+  try {
+    const iv = Buffer.from(hexSource.slice(0, 32), "hex");
+    const ciphertext = Buffer.from(hexSource.slice(32), "hex");
+    const keyBuf = Buffer.from(dbKey, "utf8");
+    const decipher = crypto.createDecipheriv(`aes-${keyBuf.length * 8}-ofb`, keyBuf, iv);
+    decipher.setAutoPadding(false);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  } catch {
+    return null;
+  }
 }
 
-function hashKey(rawKey) {
-  return crypto.createHash("sha256").update(rawKey).digest("hex");
-}
+// rawHeaderValue is expected to be "<userId>:<apiKey>" — read-only lookup,
+// no INSERT/UPDATE ever happens here.
+async function verifyUserKey(rawHeaderValue) {
+  const sepIndex = rawHeaderValue.indexOf(":");
+  if (sepIndex === -1) return null;
 
-async function ensureTable() {
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS api_keys (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      key_hash CHAR(64) NOT NULL,
-      key_preview VARCHAR(16) NOT NULL,
-      label VARCHAR(255) NOT NULL,
-      rate_limit_per_min INT NOT NULL DEFAULT ${DEFAULT_RATE_LIMIT},
-      active TINYINT(1) NOT NULL DEFAULT 1,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      revoked_at DATETIME NULL,
-      last_used_at DATETIME NULL,
-      UNIQUE KEY uniq_key_hash (key_hash)
-    )
-  `);
-}
+  const userId = rawHeaderValue.slice(0, sepIndex);
+  const providedKey = rawHeaderValue.slice(sepIndex + 1);
+  if (!/^\d+$/.test(userId) || !providedKey) return null;
 
-// Creates a brand new key and returns the raw value (shown once, never stored).
-async function createKey(label, rateLimitPerMin = DEFAULT_RATE_LIMIT) {
-  const rawKey = generateRawKey();
-  const hash = hashKey(rawKey);
-  const preview = `${rawKey.slice(0, 11)}…${rawKey.slice(-4)}`;
+  const dbKey = process.env.G5API_DB_KEY;
+  if (!dbKey) return null;
 
-  const [result] = await db.query(
-    `INSERT INTO api_keys (key_hash, key_preview, label, rate_limit_per_min)
-     VALUES (?, ?, ?, ?)`,
-    [hash, preview, label, rateLimitPerMin]
+  const [[row]] = await db.query(
+    "SELECT id, name, steam_id, admin, super_admin, api_key FROM `user` WHERE id = ? AND api_key IS NOT NULL LIMIT 1",
+    [userId]
   );
+  if (!row) return null;
 
-  return { id: result.insertId, rawKey, preview };
+  const decrypted = decryptG5ApiKey(row.api_key, dbKey);
+  if (decrypted === null || decrypted !== providedKey) return null;
+
+  return {
+    id: `user:${row.id}`,
+    label: row.name || row.steam_id,
+    rate_limit_per_min: DEFAULT_RATE_LIMIT,
+  };
 }
 
-async function listKeys() {
+// Read-only visibility for the admin panel — never exposes key material.
+async function listApiUsers() {
   const [rows] = await db.query(
-    `SELECT id, key_preview, label, rate_limit_per_min, active,
-            created_at, revoked_at, last_used_at
-     FROM api_keys
-     ORDER BY created_at DESC`
+    "SELECT id, name, steam_id, admin, super_admin FROM `user` WHERE api_key IS NOT NULL ORDER BY name"
   );
   return rows;
 }
 
-async function revokeKey(id) {
-  const [result] = await db.query(
-    `UPDATE api_keys SET active = 0, revoked_at = NOW() WHERE id = ?`,
-    [id]
-  );
-  return result.affectedRows > 0;
-}
-
-async function findActiveByRawKey(rawKey) {
-  const hash = hashKey(rawKey);
-  const [[row]] = await db.query(
-    `SELECT id, label, rate_limit_per_min, active
-     FROM api_keys
-     WHERE key_hash = ? AND active = 1
-     LIMIT 1`,
-    [hash]
-  );
-  return row || null;
-}
-
-function touchLastUsed(id) {
-  // Fire-and-forget — never block the request on this bookkeeping write.
-  db.query(`UPDATE api_keys SET last_used_at = NOW() WHERE id = ?`, [id]).catch(() => {});
-}
-
-// Ensures the INTERNAL_API_KEY from env always resolves to an active row,
-// so the frontend (proxied server-side, never exposed to the browser) works
-// out of the box while still going through the same key/rate-limit machinery.
-async function seedInternalKey() {
-  const rawKey = process.env.INTERNAL_API_KEY;
-  if (!rawKey) return;
-
-  const hash = hashKey(rawKey);
-  const preview = `${rawKey.slice(0, Math.min(11, rawKey.length))}…`;
-  const rateLimit = parseInt(process.env.INTERNAL_API_KEY_RATE_LIMIT) || 6000;
-
-  await db.query(
-    `INSERT INTO api_keys (key_hash, key_preview, label, rate_limit_per_min, active)
-     VALUES (?, ?, 'Frontend (interne)', ?, 1)
-     ON DUPLICATE KEY UPDATE
-       label = 'Frontend (interne)',
-       rate_limit_per_min = VALUES(rate_limit_per_min),
-       active = 1,
-       revoked_at = NULL`,
-    [hash, preview, rateLimit]
-  );
-}
-
 module.exports = {
   DEFAULT_RATE_LIMIT,
-  ensureTable,
-  createKey,
-  listKeys,
-  revokeKey,
-  findActiveByRawKey,
-  touchLastUsed,
-  seedInternalKey,
+  INTERNAL_RATE_LIMIT,
+  verifyUserKey,
+  listApiUsers,
 };

@@ -21,16 +21,6 @@ export const getAdminDemosBroken = (code) =>
 export const getAdminApiKeys = (code) =>
   api.get("/admin/keys", { headers: { "x-admin-code": code } });
 
-export const createAdminApiKey = (code, label, rateLimitPerMin) =>
-  api.post(
-    "/admin/keys",
-    { label, rate_limit_per_min: rateLimitPerMin },
-    { headers: { "x-admin-code": code } }
-  );
-
-export const revokeAdminApiKey = (code, id) =>
-  api.delete(`/admin/keys/${id}`, { headers: { "x-admin-code": code } });
-
 export const getMapRounds = (mapId) => api.get(`/rounds/${mapId}`);
 
 export const getSeasonTournaments = (seasonId) => api.get(`/tournaments/season/${seasonId}`);
