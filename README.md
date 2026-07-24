@@ -9,7 +9,8 @@ Dashboard de statistiques pour tournois CS:GO et CS2, construit autour de la bas
 - **Statistiques joueurs** — KD, ADR, KAST, multikills (K2–K5), classement dynamique par colonne
 - **Détails de round** — timeline chronologique (CT/T, vainqueur, raison) avec kills en tooltip
 - **Téléchargement de démos** — upload via token G5API, lien de téléchargement public
-- **Page admin** — protégée par code d'accès
+- **Page admin** — protégée par code d'accès, gestion des clés API
+- **API publique documentée** — clé API + rate limiting par clé, doc interactive sur `/api/docs`
 
 ## Stack
 
@@ -52,6 +53,12 @@ PUBLIC_URL=https://stats.yourdomain.com
 
 # Code d'accès à la page admin
 ADMIN_CODE=changeme
+
+# Clé API "interne" utilisée par le frontend pour appeler /api/* (voir
+# section "API — authentification par clé & rate limiting" ci-dessous).
+# Même valeur à définir sur le conteneur frontend.
+INTERNAL_API_KEY=changeme
+INTERNAL_API_KEY_RATE_LIMIT=6000
 ```
 
 **frontend/.env** (optionnel)
@@ -60,6 +67,9 @@ ADMIN_CODE=changeme
 # URL de base de votre instance G5V (images de maps dans le veto)
 # Laisser vide si G5V est servi sur le même hôte
 VITE_G5V_URL=https://ebot.yourdomain.com
+
+# Doit correspondre à INTERNAL_API_KEY du backend
+INTERNAL_API_KEY=changeme
 ```
 
 ### 2. Lancer les conteneurs
@@ -75,6 +85,7 @@ docker run -d \
 docker run -d \
   -e BACKEND_HOST=127.0.0.1 \
   -e BACKEND_PORT=3001 \
+  -e INTERNAL_API_KEY=changeme \
   -p 80:80 \
   ghcr.io/french-csgo/tournament-stats-frontend:latest
 ```
@@ -97,16 +108,31 @@ npm run dev            # Vite sur :5173
 
 ## API – routes principales
 
-| Méthode | Route | Description |
-|---------|-------|-------------|
-| GET | `/api/seasons` | Liste des saisons |
-| GET | `/api/matches` | Résultats des matchs |
-| GET | `/api/teams` | Équipes |
-| GET | `/api/players` | Joueurs |
-| GET | `/api/stats` | Statistiques agrégées |
-| GET | `/api/rounds/:matchId/:mapNumber` | Timeline des rounds |
-| POST | `/api/demos/upload` | Upload de démo (token requis) |
-| GET | `/health` | Healthcheck |
+| Méthode | Route | Description | Clé API requise |
+|---------|-------|-------------|:---:|
+| GET | `/api/seasons` | Liste des saisons | ✅ |
+| GET | `/api/matches/:id` | Détail d'un match | ✅ |
+| GET | `/api/teams` | Équipes | ✅ |
+| GET | `/api/players/:steamId/avatar` | Avatar Steam | ✅ |
+| GET | `/api/stats` | Statistiques agrégées | ✅ |
+| GET | `/api/rounds/:map_id` | Timeline des rounds | ✅ |
+| GET | `/api/tournaments/:slug` | Bracket Challonge | ✅ |
+| GET/POST/DELETE | `/api/admin/*` | Admin (démos, clés API) | ✅ + `x-admin-code` |
+| POST | `/api/demos` | Upload de démo (token G5API requis) | ❌ |
+| GET | `/api/demos/:filename` | Téléchargement public d'une démo | ❌ |
+| GET | `/api/docs` | Documentation interactive (Swagger UI) | ❌ |
+| GET | `/health` | Healthcheck | ❌ |
+
+Liste complète, schémas et exemples : voir `/api/docs` (Swagger UI, générée depuis [`backend/docs/openapi.json`](backend/docs/openapi.json)).
+
+## API — authentification par clé & rate limiting
+
+Toutes les routes `/api/*` (à l'exception de `/api/demos`, qui garde son propre système de token pour G5API) exigent une clé API valide.
+
+- **Envoi de la clé** : en-tête `X-Api-Key: <clé>` ou `Authorization: Bearer <clé>`.
+- **Génération / révocation** : depuis la page Admin du frontend (onglet « Clés API »), ou directement via `/api/admin/keys` (protégé par `x-admin-code`). La clé brute n'est affichée qu'une seule fois à la création — seul un hash SHA-256 est conservé en base.
+- **Rate limiting** : chaque clé a son propre quota de requêtes par minute (60 par défaut, configurable à la création). Les en-têtes `RateLimit-*` sont renvoyés sur chaque réponse ; un dépassement renvoie `429 Too Many Requests`.
+- **Frontend** : le SPA appelle `/api/*` via le proxy Nginx (prod) ou Vite (dev), qui injecte automatiquement une clé « interne » (`INTERNAL_API_KEY`) côté serveur — le navigateur ne voit jamais cette clé. Le backend la reconnaît comme une clé API normale (visible et révocable dans l'onglet « Clés API »), avec un quota par défaut plus élevé (`INTERNAL_API_KEY_RATE_LIMIT`).
 
 ## CI / Images Docker
 

@@ -3,6 +3,7 @@ const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 const path = require("path");
+const swaggerUi = require("swagger-ui-express");
 
 const seasonsRouter = require("./routes/seasons");
 const matchesRouter = require("./routes/matches");
@@ -14,6 +15,11 @@ const playersRouter = require("./routes/players");
 const roundsRouter       = require("./routes/rounds");
 const tournamentsRouter  = require("./routes/tournaments");
 
+const apiKeys = require("./utils/apiKeys");
+const apiKeyAuth = require("./middleware/apiKeyAuth");
+const apiRateLimiter = require("./middleware/rateLimiter");
+const openapiSpec = require("./docs/openapi.json");
+
 const app = express();
 
 app.use(morgan("dev"));
@@ -24,15 +30,23 @@ app.use(express.json());
 // Static demo files
 app.use("/demos", express.static(path.join(__dirname, "public/demos")));
 
-app.use("/api/seasons", seasonsRouter);
-app.use("/api/matches", matchesRouter);
-app.use("/api/teams", teamsRouter);
+// Documentation interactive — publique, aucune clé requise pour la consulter
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
+app.get("/api/docs.json", (req, res) => res.json(openapiSpec));
+
+// Toutes les routes /api/* (hors /api/demos, qui a sa propre auth par token)
+// requièrent une clé API valide et sont soumises au rate limit de cette clé.
+const protectedApi = [apiKeyAuth, apiRateLimiter];
+
+app.use("/api/seasons", protectedApi, seasonsRouter);
+app.use("/api/matches", protectedApi, matchesRouter);
+app.use("/api/teams", protectedApi, teamsRouter);
 app.use("/api/demos", demosRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/stats",   statsRouter);
-app.use("/api/players", playersRouter);
-app.use("/api/rounds",       roundsRouter);
-app.use("/api/tournaments",  tournamentsRouter);
+app.use("/api/admin", protectedApi, adminRouter);
+app.use("/api/stats",   protectedApi, statsRouter);
+app.use("/api/players", protectedApi, playersRouter);
+app.use("/api/rounds",       protectedApi, roundsRouter);
+app.use("/api/tournaments",  protectedApi, tournamentsRouter);
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
@@ -42,4 +56,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`[backend] listening on :${PORT}`));
+
+(async () => {
+  await apiKeys.ensureTable();
+  await apiKeys.seedInternalKey();
+  app.listen(PORT, () => console.log(`[backend] listening on :${PORT}`));
+})().catch((err) => {
+  console.error("[backend] startup failed:", err);
+  process.exit(1);
+});
