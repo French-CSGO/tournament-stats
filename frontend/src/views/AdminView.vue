@@ -102,9 +102,12 @@
           Toutes les routes <code>/api/*</code> (hors upload de démos) exigent une clé API envoyée
           via l'en-tête <code>X-Api-Key</code>, avec un quota de requêtes/minute par clé.
           Les clés sont celles déjà émises par <strong>G5API</strong> (page « Utilisateurs »),
-          au format <code>&lt;id&gt;:&lt;clé&gt;</code> — cette page se contente de lister,
-          en lecture seule, les comptes qui en disposent. Voir
+          au format <code>&lt;id&gt;:&lt;clé&gt;</code>. Voir
           <a href="/api/docs" target="_blank" style="color:var(--accent)">/api/docs</a> pour la documentation complète.
+        </p>
+
+        <p style="font-family:var(--font-mono);font-size:10px;color:var(--warn);letter-spacing:0.08em;margin-bottom:20px;text-transform:uppercase">
+          ⚠ Ces clés sont affichées en clair — ne partagez cette page ni ces valeurs qu'avec des personnes de confiance.
         </p>
 
         <table class="table">
@@ -113,6 +116,8 @@
               <th>NOM</th>
               <th>STEAM ID</th>
               <th>RÔLE</th>
+              <th>CLÉ API</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -120,9 +125,16 @@
               <td style="font-family:var(--font-display);letter-spacing:0.02em">{{ u.name || '—' }}</td>
               <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">{{ u.steam_id }}</span></td>
               <td class="dim">{{ u.super_admin ? 'SUPER ADMIN' : (u.admin ? 'ADMIN' : '—') }}</td>
+              <td>
+                <code v-if="u.api_key" style="font-family:var(--font-mono);font-size:11px;word-break:break-all">{{ u.api_key }}</code>
+                <span v-else class="dim">— (G5API_DB_KEY manquant ou déchiffrement impossible)</span>
+              </td>
+              <td>
+                <button v-if="u.api_key" class="btn ghost" @click="copyKey(u)">{{ copiedId === u.id ? '✓ COPIÉ' : 'COPIER' }}</button>
+              </td>
             </tr>
             <tr v-if="!apiUsers.length">
-              <td colspan="3" style="text-align:center;padding:48px;font-family:var(--font-mono);color:var(--ink-4);letter-spacing:0.12em">
+              <td colspan="5" style="text-align:center;padding:48px;font-family:var(--font-mono);color:var(--ink-4);letter-spacing:0.12em">
                 <div style="font-family:var(--font-display);font-size:56px;color:var(--ink-4);margin-bottom:12px">—</div>
                 AUCUN COMPTE AVEC CLÉ API
               </td>
@@ -209,6 +221,7 @@ const missing      = ref([]);
 const broken       = ref([]);
 
 const apiUsers = ref([]);
+const copiedId = ref(null);
 
 const STORAGE_KEY = "admin_code";
 
@@ -245,6 +258,14 @@ async function loadKeys() {
   const code = localStorage.getItem(STORAGE_KEY);
   const { data } = await getAdminApiKeys(code);
   apiUsers.value = data;
+}
+
+async function copyKey(user) {
+  await navigator.clipboard.writeText(user.api_key);
+  copiedId.value = user.id;
+  setTimeout(() => {
+    if (copiedId.value === user.id) copiedId.value = null;
+  }, 2000);
 }
 
 function fmtDate(d) {
