@@ -55,12 +55,27 @@ async function verifyUserKey(rawHeaderValue) {
   };
 }
 
-// Read-only visibility for the admin panel — never exposes key material.
+// Read-only visibility for the admin panel. Decrypts each key so it can be
+// copy-pasted directly (same "<id>:<key>" format G5API itself shows users on
+// their profile) — anyone with the admin code can see every user's key here,
+// so treat this route with the same care as the admin code itself.
 async function listApiUsers() {
   const [rows] = await db.query(
-    "SELECT id, name, steam_id, admin, super_admin FROM `user` WHERE api_key IS NOT NULL ORDER BY name"
+    "SELECT id, name, steam_id, admin, super_admin, api_key FROM `user` WHERE api_key IS NOT NULL ORDER BY name"
   );
-  return rows;
+
+  const dbKey = process.env.G5API_DB_KEY;
+  return rows.map((row) => {
+    const decrypted = dbKey ? decryptG5ApiKey(row.api_key, dbKey) : null;
+    return {
+      id: row.id,
+      name: row.name,
+      steam_id: row.steam_id,
+      admin: row.admin,
+      super_admin: row.super_admin,
+      api_key: decrypted ? `${row.id}:${decrypted}` : null,
+    };
+  });
 }
 
 module.exports = {
