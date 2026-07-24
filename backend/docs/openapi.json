@@ -38,7 +38,17 @@
         "summary": "Liste des saisons",
         "tags": ["Seasons"],
         "responses": {
-          "200": { "description": "Liste des saisons avec nombre de matchs" },
+          "200": {
+            "description": "Liste des saisons avec nombre de matchs",
+            "content": {
+              "application/json": {
+                "example": [
+                  { "id": 4, "name": "Saison 4", "start_date": "2026-01-12", "end_date": "2026-04-20", "match_count": 38 },
+                  { "id": 3, "name": "Saison 3", "start_date": "2025-09-01", "end_date": "2025-12-15", "match_count": 42 }
+                ]
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
         }
@@ -52,7 +62,40 @@
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": { "description": "Saison, brackets, matchs et joueurs" },
+          "200": {
+            "description": "Saison, brackets, matchs et joueurs",
+            "content": {
+              "application/json": {
+                "example": {
+                  "season": { "id": 4, "name": "Saison 4", "start_date": "2026-01-12", "end_date": "2026-04-20" },
+                  "brackets": [
+                    { "id": 1, "challonge_slug": "saison4_playoffs", "label": "Playoffs", "display_order": 0 }
+                  ],
+                  "matches": [
+                    {
+                      "id": 512, "start_time": "2026-04-18T19:00:00.000Z", "end_time": "2026-04-18T20:12:00.000Z",
+                      "team1_score": 1, "team2_score": 0, "team1_series_score": 2, "team2_series_score": 0,
+                      "cancelled": 0, "forfeit": 0, "max_maps": 3,
+                      "challonge_id": "123456789", "challonge_slug": "saison4_playoffs",
+                      "team1_id": 7, "team1_name": "Vitality Academy", "team1_logo": "vitality.png",
+                      "team2_id": 9, "team2_name": "Kalunga", "team2_logo": "kalunga.png",
+                      "winner_id": 7, "map1_team1_score": 16, "map1_team2_score": 10
+                    }
+                  ],
+                  "players": [
+                    {
+                      "steam_id": "76561198000000001", "name": "PlayerOne",
+                      "kills": 412, "deaths": 350, "assists": 88, "headshot_kills": 190,
+                      "damage": 32000, "roundsplayed": 380,
+                      "k1": 210, "k2": 60, "k3": 12, "k4": 3, "k5": 1,
+                      "v1": 40, "v2": 10, "v3": 2, "v4": 0, "v5": 0,
+                      "kast": 270, "maps_played": 19, "rating": 1.18
+                    }
+                  ]
+                }
+              }
+            }
+          },
           "404": { "$ref": "#/components/responses/NotFound" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
@@ -67,7 +110,49 @@
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": { "description": "Match, maps et vetos" },
+          "200": {
+            "description": "Match, maps et vetos",
+            "content": {
+              "application/json": {
+                "example": {
+                  "match": {
+                    "id": 512, "start_time": "2026-04-18T19:00:00.000Z", "end_time": "2026-04-18T20:12:00.000Z",
+                    "team1_score": 1, "team2_score": 0, "team1_series_score": 2, "team2_series_score": 0,
+                    "cancelled": 0, "forfeit": 0, "max_maps": 3, "veto_mappool": "de_mirage,de_inferno,de_ancient",
+                    "challonge_id": "123456789",
+                    "team1_id": 7, "team1_name": "Vitality Academy", "team1_logo": "vitality.png",
+                    "team2_id": 9, "team2_name": "Kalunga", "team2_logo": "kalunga.png",
+                    "winner_id": 7, "season_id": 4, "season_name": "Saison 4"
+                  },
+                  "maps": [
+                    {
+                      "id": 900, "map_number": 0, "map_name": "de_mirage",
+                      "team1_score": 16, "team1_score_ct": 9, "team1_score_t": 7,
+                      "team2_score": 10, "team2_score_ct": 4, "team2_score_t": 6,
+                      "team1_first_side": "ct", "start_time": "2026-04-18T19:05:00.000Z", "end_time": "2026-04-18T19:52:00.000Z",
+                      "demoFile": "512_de_mirage.dem",
+                      "players": [
+                        {
+                          "map_id": 900, "steam_id": "76561198000000001", "name": "PlayerOne",
+                          "kills": 24, "deaths": 18, "assists": 4, "headshot_kills": 11,
+                          "damage": 1980, "roundsplayed": 26,
+                          "k1": 14, "k2": 4, "k3": 1, "k4": 0, "k5": 0,
+                          "v1": 3, "v2": 1, "v3": 0, "v4": 0, "v5": 0,
+                          "firstkill_ct": 2, "firstkill_t": 1, "firstdeath_ct": 1, "firstdeath_t": 2,
+                          "bomb_plants": 0, "bomb_defuses": 1, "kast": 19,
+                          "team_id": 7, "team_name": "Vitality Academy", "rating": 1.22
+                        }
+                      ]
+                    }
+                  ],
+                  "vetos": [
+                    { "id": 1, "team_name": "Vitality Academy", "map": "de_nuke", "pick_or_veto": "ban", "side": null, "side_team": null },
+                    { "id": 2, "team_name": "Kalunga", "map": "de_mirage", "pick_or_veto": "pick", "side": "CT", "side_team": "Kalunga" }
+                  ]
+                }
+              }
+            }
+          },
           "404": { "$ref": "#/components/responses/NotFound" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
@@ -82,7 +167,17 @@
           { "name": "challonge_id", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "Match trouvé" },
+          "200": {
+            "description": "Match trouvé",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 512, "team1_score": 1, "team2_score": 0, "cancelled": 0, "forfeit": 0,
+                  "team1_name": "Vitality Academy", "team2_name": "Kalunga", "winner_id": 7
+                }
+              }
+            }
+          },
           "404": { "$ref": "#/components/responses/NotFound" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
@@ -94,7 +189,17 @@
         "summary": "Liste des équipes",
         "tags": ["Teams"],
         "responses": {
-          "200": { "description": "Liste des équipes avec nombre de matchs" },
+          "200": {
+            "description": "Liste des équipes avec nombre de matchs",
+            "content": {
+              "application/json": {
+                "example": [
+                  { "id": 7, "name": "Vitality Academy", "flag": "fr", "logo": "vitality.png", "tag": "VITA", "match_count": 24 },
+                  { "id": 9, "name": "Kalunga", "flag": "br", "logo": "kalunga.png", "tag": "KLG", "match_count": 18 }
+                ]
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
         }
@@ -109,7 +214,33 @@
           { "name": "season_id", "in": "query", "required": false, "schema": { "type": "integer" }, "description": "Filtre les matchs sur une saison" }
         ],
         "responses": {
-          "200": { "description": "Équipe, matchs et joueurs" },
+          "200": {
+            "description": "Équipe, matchs et joueurs",
+            "content": {
+              "application/json": {
+                "example": {
+                  "team": { "id": 7, "name": "Vitality Academy", "flag": "fr", "logo": "vitality.png", "tag": "VITA" },
+                  "matches": [
+                    {
+                      "id": 512, "start_time": "2026-04-18T19:00:00.000Z", "end_time": "2026-04-18T20:12:00.000Z",
+                      "team1_score": 1, "team2_score": 0, "cancelled": 0, "forfeit": 0, "max_maps": 3,
+                      "team1_id": 7, "team1_name": "Vitality Academy", "team2_id": 9, "team2_name": "Kalunga",
+                      "winner_id": 7, "season_id": 4, "season_name": "Saison 4",
+                      "map1_team1_score": 16, "map1_team2_score": 10
+                    }
+                  ],
+                  "players": [
+                    {
+                      "steam_id": "76561198000000001", "name": "PlayerOne",
+                      "kills": 412, "deaths": 350, "assists": 88, "headshot_kills": 190, "damage": 32000,
+                      "roundsplayed": 380, "k1": 210, "k2": 60, "k3": 12, "k4": 3, "k5": 1, "kast": 270,
+                      "maps_played": 19, "rating": 1.18
+                    }
+                  ]
+                }
+              }
+            }
+          },
           "404": { "$ref": "#/components/responses/NotFound" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
@@ -124,7 +255,14 @@
           { "name": "steamId", "in": "path", "required": true, "schema": { "type": "string", "pattern": "^\\d{17}$" } }
         ],
         "responses": {
-          "302": { "description": "Redirection vers l'image d'avatar" },
+          "302": {
+            "description": "Redirection vers l'image d'avatar (en-tête Location)",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "example": "https://avatars.steamstatic.com/abcdef1234567890abcdef1234567890abcdef12_full.jpg" }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
         }
@@ -138,7 +276,29 @@
           { "name": "season_id", "in": "query", "required": false, "schema": { "type": "integer" }, "description": "Filtre sur une saison" }
         ],
         "responses": {
-          "200": { "description": "KPIs globaux, classement joueurs, stats par map et par arme" },
+          "200": {
+            "description": "KPIs globaux, classement joueurs, stats par map et par arme",
+            "content": {
+              "application/json": {
+                "example": {
+                  "kpis": { "totalMatches": 120, "mapsPlayed": 260, "totalKills": 41000, "avgAdr": 78.4 },
+                  "players": [
+                    {
+                      "steam_id": "76561198000000001", "name": "PlayerOne", "team": "Vitality Academy",
+                      "rating": 1.18, "kills": 412, "deaths": 350, "assists": 88,
+                      "kd": 1.18, "hs": 46, "adr": 84.2, "maps": 19, "weapon": "AK-47"
+                    }
+                  ],
+                  "mapStats": [
+                    { "map": "Mirage", "ctWins": 140, "tWins": 120, "played": 42 }
+                  ],
+                  "weaponData": [
+                    { "weapon": "AK-47", "kills": 9800, "color": "#ef4444", "pct": 24 }
+                  ]
+                }
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
         }
@@ -152,7 +312,26 @@
           { "name": "map_id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": { "description": "Liste des rounds avec vainqueur, raison et kills" },
+          "200": {
+            "description": "Liste des rounds avec vainqueur, raison et kills",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "round_num": 1, "winner_team_id": 7, "winner_side": "CT", "reason": "ct_win",
+                    "t1_score_after": 1, "t2_score_after": 0, "team1_side": "CT",
+                    "kills": [
+                      {
+                        "killer_name": "PlayerOne", "victim_name": "PlayerTwo",
+                        "killer_side": "CT", "victim_side": "T",
+                        "weapon": "ak47", "headshot": true, "friendly_fire": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
         }
@@ -166,7 +345,16 @@
           { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": { "description": "Liste des tournois (slug Challonge, libellé)" },
+          "200": {
+            "description": "Liste des tournois (slug Challonge, libellé)",
+            "content": {
+              "application/json": {
+                "example": [
+                  { "id": 1, "season_id": 4, "challonge_slug": "saison4_playoffs", "label": "Playoffs" }
+                ]
+              }
+            }
+          },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
         }
@@ -180,7 +368,30 @@
           { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "Tournoi, participants et matchs" },
+          "200": {
+            "description": "Tournoi, participants et matchs",
+            "content": {
+              "application/json": {
+                "example": {
+                  "tournament": {
+                    "id": 987654, "name": "Saison 4 — Playoffs", "url": "saison4_playoffs",
+                    "state": "underway", "tournament_type": "single elimination"
+                  },
+                  "participants": [
+                    { "id": 111, "name": "Vitality Academy", "final_rank": 1 },
+                    { "id": 112, "name": "Kalunga", "final_rank": 2 }
+                  ],
+                  "matches": [
+                    {
+                      "id": 123456789, "state": "complete", "round": 1,
+                      "player1_id": 111, "player2_id": 112,
+                      "scores_csv": "16-10", "winner_id": 111
+                    }
+                  ]
+                }
+              }
+            }
+          },
           "404": { "$ref": "#/components/responses/NotFound" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "429": { "$ref": "#/components/responses/TooManyRequests" }
