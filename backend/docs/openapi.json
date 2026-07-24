@@ -3,7 +3,7 @@
   "info": {
     "title": "Tournament Stats API",
     "version": "1.0.0",
-    "description": "API publique en lecture pour les statistiques de tournois CS:GO/CS2 (saisons, matchs, équipes, joueurs, rounds, brackets Challonge).\n\n### Authentification\nToutes les routes `/api/*` (hors `/api/demos`) requièrent une clé API envoyée dans l'en-tête `X-Api-Key` (ou `Authorization: Bearer <clé>`).\n\n### Rate limiting\nChaque clé dispose d'un quota de requêtes par minute (par défaut 60). Les en-têtes `RateLimit-*` sont renvoyés sur chaque réponse ; un dépassement renvoie `429 Too Many Requests`.\n\nContactez un administrateur pour obtenir une clé API."
+    "description": "API publique en lecture pour les statistiques de tournois CS:GO/CS2 (saisons, matchs, équipes, joueurs, rounds, brackets Challonge).\n\n### Authentification\nToutes les routes `/api/*` (hors `/api/demos`) requièrent une clé API envoyée dans l'en-tête `X-Api-Key` (ou `Authorization: Bearer <clé>`).\n\nCette API ne gère pas ses propres clés : elle réutilise celles déjà émises par **G5API**. La valeur à envoyer est exactement celle affichée sur votre profil G5API, au format `<id>:<clé>` (le même que l'en-tête `user-api` de G5API). Aucune création ni révocation de clé n'est possible depuis cette API — cela se fait depuis G5API.\n\n### Rate limiting\nChaque clé dispose d'un quota de requêtes par minute (60 par défaut). Les en-têtes `RateLimit-*` sont renvoyés sur chaque réponse ; un dépassement renvoie `429 Too Many Requests`."
   },
   "servers": [
     { "url": "/api", "description": "Base de l'API" }

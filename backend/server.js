@@ -15,7 +15,6 @@ const playersRouter = require("./routes/players");
 const roundsRouter       = require("./routes/rounds");
 const tournamentsRouter  = require("./routes/tournaments");
 
-const apiKeys = require("./utils/apiKeys");
 const apiKeyAuth = require("./middleware/apiKeyAuth");
 const apiRateLimiter = require("./middleware/rateLimiter");
 const openapiSpec = require("./docs/openapi.json");
@@ -56,12 +55,4 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-
-(async () => {
-  await apiKeys.ensureTable();
-  await apiKeys.seedInternalKey();
-  app.listen(PORT, () => console.log(`[backend] listening on :${PORT}`));
-})().catch((err) => {
-  console.error("[backend] startup failed:", err);
-  process.exit(1);
-});
+app.listen(PORT, () => console.log(`[backend] listening on :${PORT}`));
