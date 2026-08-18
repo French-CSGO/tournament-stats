@@ -5,6 +5,7 @@ const api = axios.create({ baseURL: "/api" });
 export const getSeasons = () => api.get("/seasons");
 export const getSeason = (id) => api.get(`/seasons/${id}`);
 export const getMatch = (id) => api.get(`/matches/${id}`);
+export const getMatches = (params = {}) => api.get("/matches", { params });
 export const getTeams = () => api.get("/teams");
 export const getTeam = (id, seasonId) =>
   api.get(`/teams/${id}`, { params: seasonId ? { season_id: seasonId } : {} });
@@ -17,6 +18,9 @@ export const getAdminDemosMissing = (code) =>
 
 export const getAdminDemosBroken = (code) =>
   api.get("/admin/demos/broken", { headers: { "x-admin-code": code } });
+
+export const getAdminApiKeys = (code) =>
+  api.get("/admin/keys", { headers: { "x-admin-code": code } });
 
 export const getMapRounds = (mapId) => api.get(`/rounds/${mapId}`);
 

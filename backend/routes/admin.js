@@ -2,6 +2,7 @@ const { Router } = require("express");
 const db = require("../db");
 const fs = require("fs");
 const path = require("path");
+const apiKeys = require("../utils/apiKeys");
 
 const router = Router();
 const DEMOS_DIR = path.resolve("public/demos");
@@ -48,6 +49,20 @@ router.get("/demos/broken", async (req, res) => {
   `);
   const broken = rows.filter(r => !fs.existsSync(path.join(DEMOS_DIR, r.demoFile)));
   res.json(broken);
+});
+
+// ── Clés API ─────────────────────────────────────────────────────────────
+// Les clés API sont celles déjà émises par G5API (colonne user.api_key,
+// chiffrée) — cette base étant une réplique en lecture seule, on ne peut
+// ni en créer ni en révoquer ici. Cette route liste, en lecture seule,
+// les comptes G5API disposant d'une clé (gestion réelle : page
+// "Utilisateurs" de G5API).
+
+// GET /api/admin/keys — comptes G5API avec une clé API active
+router.get("/keys", async (req, res) => {
+  if (!auth(req, res)) return;
+  const users = await apiKeys.listApiUsers();
+  res.json(users);
 });
 
 module.exports = router;

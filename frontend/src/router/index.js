@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import SeasonsView  from "../views/SeasonsView.vue";
 import SeasonView   from "../views/SeasonView.vue";
 import MatchView    from "../views/MatchView.vue";
+import MatchesView  from "../views/MatchesView.vue";
 import TeamsView    from "../views/TeamsView.vue";
 import StatsView    from "../views/StatsView.vue";
 import AdminView        from "../views/AdminView.vue";
@@ -16,6 +17,7 @@ export default createRouter({
     { path: "/season/:seasonId/tournaments",          component: TournamentView },
     { path: "/season/:seasonId/tournaments/:slug",    component: TournamentView },
     { path: "/match/:id",    component: MatchView },
+    { path: "/matches",      component: MatchesView },
     { path: "/teams",          component: TeamsView },
     { path: "/teams/:id",      component: TeamsView },
     { path: "/stats",              component: StatsView },

@@ -4,6 +4,40 @@ const { calcRating } = require("../utils/rating");
 
 const router = Router();
 
+// GET /api/matches — list all matches across seasons, most recent first
+// Optional filters: season_id, team_id, status (live|finished|upcoming)
+router.get("/", async (req, res) => {
+  const { season_id, team_id, status } = req.query;
+  const where = ["m.cancelled = 0"];
+  const params = [];
+  if (season_id) { where.push("m.season_id = ?"); params.push(season_id); }
+  if (team_id) { where.push("(m.team1_id = ? OR m.team2_id = ?)"); params.push(team_id, team_id); }
+  if (status === "live") where.push("m.start_time IS NOT NULL AND m.end_time IS NULL");
+  if (status === "finished") where.push("m.end_time IS NOT NULL");
+  if (status === "upcoming") where.push("m.start_time IS NULL");
+
+  const [matches] = await db.query(
+    `SELECT m.id, m.start_time, m.end_time, m.team1_score, m.team2_score,
+            m.team1_series_score, m.team2_series_score,
+            m.cancelled, m.forfeit, m.max_maps,
+            t1.id AS team1_id, t1.name AS team1_name, t1.logo AS team1_logo,
+            t2.id AS team2_id, t2.name AS team2_name, t2.logo AS team2_logo,
+            w.id  AS winner_id,
+            s.id  AS season_id, s.name AS season_name,
+            (SELECT ms.team1_score FROM map_stats ms WHERE ms.match_id = m.id ORDER BY ms.map_number ASC LIMIT 1) AS map1_team1_score,
+            (SELECT ms.team2_score FROM map_stats ms WHERE ms.match_id = m.id ORDER BY ms.map_number ASC LIMIT 1) AS map1_team2_score
+     FROM \`match\` m
+     LEFT JOIN team t1  ON t1.id = m.team1_id
+     LEFT JOIN team t2  ON t2.id = m.team2_id
+     LEFT JOIN team w   ON w.id  = m.winner
+     LEFT JOIN season s ON s.id  = m.season_id
+     WHERE ${where.join(" AND ")}
+     ORDER BY m.start_time DESC`,
+    params
+  );
+  res.json(matches);
+});
+
 // GET /api/matches/challonge/:challonge_id — find a G5 match by Challonge match ID
 router.get("/challonge/:challonge_id", async (req, res) => {
   const { challonge_id } = req.params;
@@ -31,6 +65,7 @@ router.get("/:id", async (req, res) => {
     `SELECT m.id, m.start_time, m.end_time, m.team1_score, m.team2_score,
             m.team1_series_score, m.team2_series_score,
             m.cancelled, m.forfeit, m.max_maps, m.veto_mappool,
+            m.challonge_id,
             t1.id AS team1_id, t1.name AS team1_name, t1.logo AS team1_logo,
             t2.id AS team2_id, t2.name AS team2_name, t2.logo AS team2_logo,
             w.id  AS winner_id,

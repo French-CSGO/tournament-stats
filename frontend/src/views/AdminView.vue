@@ -77,6 +77,11 @@
           <div class="label" style="font-size:18px">FICHIERS</div>
           <div class="stat">{{ broken.length }} RÉFÉRENCES BRISÉES</div>
         </div>
+        <div class="item" :class="{ on: activeTab === 'keys' }" @click="activeTab = 'keys'; loadKeys()">
+          <div class="sub">ACCÈS</div>
+          <div class="label" style="font-size:18px">CLÉS API</div>
+          <div class="stat">{{ apiUsers.length }} COMPTE(S) AVEC CLÉ</div>
+        </div>
       </div>
 
       <div v-if="loading" class="section">
@@ -84,6 +89,59 @@
           CHARGEMENT…
         </div>
       </div>
+
+      <section v-else-if="activeTab === 'keys'" class="section">
+        <div class="section-head">
+          <h2>Clés API</h2>
+          <div class="right">
+            <span class="index">— PG. 03</span>
+          </div>
+        </div>
+
+        <p style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:0.06em;margin-bottom:20px">
+          Toutes les routes <code>/api/*</code> (hors upload de démos) exigent une clé API envoyée
+          via l'en-tête <code>X-Api-Key</code>, avec un quota de requêtes/minute par clé.
+          Les clés sont celles déjà émises par <strong>G5API</strong> (page « Utilisateurs »),
+          au format <code>&lt;id&gt;:&lt;clé&gt;</code>. Voir
+          <a href="/api/docs" target="_blank" style="color:var(--accent)">/api/docs</a> pour la documentation complète.
+        </p>
+
+        <p style="font-family:var(--font-mono);font-size:10px;color:var(--warn);letter-spacing:0.08em;margin-bottom:20px;text-transform:uppercase">
+          ⚠ Ces clés sont affichées en clair — ne partagez cette page ni ces valeurs qu'avec des personnes de confiance.
+        </p>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>NOM</th>
+              <th>STEAM ID</th>
+              <th>RÔLE</th>
+              <th>CLÉ API</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="u in apiUsers" :key="u.id">
+              <td style="font-family:var(--font-display);letter-spacing:0.02em">{{ u.name || '—' }}</td>
+              <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">{{ u.steam_id }}</span></td>
+              <td class="dim">{{ u.super_admin ? 'SUPER ADMIN' : (u.admin ? 'ADMIN' : '—') }}</td>
+              <td>
+                <code v-if="u.api_key" style="font-family:var(--font-mono);font-size:11px;word-break:break-all">{{ u.api_key }}</code>
+                <span v-else class="dim">— (G5API_DB_KEY manquant ou déchiffrement impossible)</span>
+              </td>
+              <td>
+                <button v-if="u.api_key" class="btn ghost" @click="copyKey(u)">{{ copiedId === u.id ? '✓ COPIÉ' : 'COPIER' }}</button>
+              </td>
+            </tr>
+            <tr v-if="!apiUsers.length">
+              <td colspan="5" style="text-align:center;padding:48px;font-family:var(--font-mono);color:var(--ink-4);letter-spacing:0.12em">
+                <div style="font-family:var(--font-display);font-size:56px;color:var(--ink-4);margin-bottom:12px">—</div>
+                AUCUN COMPTE AVEC CLÉ API
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
 
       <section v-else class="section">
         <div class="section-head">
@@ -148,7 +206,11 @@
 
 <script setup>
 import { ref } from "vue";
-import { getAdminDemosMissing, getAdminDemosBroken } from "../api/index.js";
+import {
+  getAdminDemosMissing,
+  getAdminDemosBroken,
+  getAdminApiKeys,
+} from "../api/index.js";
 
 const codeInput    = ref("");
 const loginError   = ref(false);
@@ -157,6 +219,9 @@ const activeTab    = ref("missing");
 const loading      = ref(false);
 const missing      = ref([]);
 const broken       = ref([]);
+
+const apiUsers = ref([]);
+const copiedId = ref(null);
 
 const STORAGE_KEY = "admin_code";
 
@@ -187,6 +252,20 @@ async function loadData(code) {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadKeys() {
+  const code = localStorage.getItem(STORAGE_KEY);
+  const { data } = await getAdminApiKeys(code);
+  apiUsers.value = data;
+}
+
+async function copyKey(user) {
+  await navigator.clipboard.writeText(user.api_key);
+  copiedId.value = user.id;
+  setTimeout(() => {
+    if (copiedId.value === user.id) copiedId.value = null;
+  }, 2000);
 }
 
 function fmtDate(d) {
