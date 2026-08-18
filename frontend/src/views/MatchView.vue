@@ -196,6 +196,10 @@ const isLive = computed(() => match.value.start_time && !match.value.end_time);
 
 const seriesScore = computed(() => {
   const m = match.value;
+  // BO1: show the actual map score instead of the 1-0 series result
+  if (m.max_maps === 1 && maps.value[0]) {
+    return { a: maps.value[0].team1_score ?? 0, b: maps.value[0].team2_score ?? 0 };
+  }
   const a = m.team1_series_score;
   const b = m.team2_series_score;
   if (a != null && b != null) return { a, b };

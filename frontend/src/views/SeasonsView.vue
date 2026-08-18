@@ -271,6 +271,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { getSeasons, getSeason, getStats } from "../api/index.js";
 import { getTeamColor, getTeamTag, getMapHue, ratingClass } from "../utils/mapData.js";
+import { matchScore } from "../utils/matchScore.js";
 
 const router = useRouter();
 const seasons = ref([]);
@@ -301,17 +302,8 @@ function isLive(m) {
 }
 
 function series(m) {
-  const a = m.team1_series_score ?? 0;
-  const b = m.team2_series_score ?? 0;
-  if (a || b) return { a, b };
-  // BO1: derive from direct map score
-  if (m.max_maps === 1) {
-    const t1 = m.map1_team1_score ?? 0;
-    const t2 = m.map1_team2_score ?? 0;
-    return { a: t1 > t2 ? 1 : 0, b: t2 > t1 ? 1 : 0 };
-  }
-  // BO3/BO5: fall back to the match-level series score
-  return { a: m.team1_score ?? 0, b: m.team2_score ?? 0 };
+  const { t1, t2 } = matchScore(m);
+  return { a: t1, b: t2 };
 }
 
 function formatBig(n) {

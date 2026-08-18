@@ -8,14 +8,17 @@
         <span class="time-cell">{{ utcTime }}</span>
         <span class="ticker">
           <div class="ticker-inner">
-            <span>TOURNAMENT STATS · <b>CS2 / CS:GO</b> · POWERED BY GET5</span>
-            <span>·</span>
-            <span>TOURNAMENT STATS · <b>CS2 / CS:GO</b> · POWERED BY GET5</span>
-            <span>·</span>
+            <template v-for="n in 2" :key="n">
+              <template v-for="(item, i) in tickerItems" :key="n + '-' + i">
+                <span>{{ item }}</span>
+                <span>·</span>
+              </template>
+            </template>
           </div>
         </span>
         <span class="nav">
           <router-link to="/" class="nav-link" :class="{ on: isHub }">HUB</router-link>
+          <router-link to="/matches" class="nav-link" :class="{ on: route.path.startsWith('/matches') }">MATCHES</router-link>
           <router-link to="/stats" class="nav-link" :class="{ on: route.path.startsWith('/stats') }">STATS</router-link>
           <router-link to="/admin" class="nav-link" :class="{ on: route.path.startsWith('/admin') }">ADMIN</router-link>
         </span>
@@ -46,6 +49,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
+import { getMatches, getStats } from "./api/index.js";
+import { getTeamTag } from "./utils/mapData.js";
+import { matchScore } from "./utils/matchScore.js";
 
 const route = useRoute();
 const utcTime = ref("--:--:-- UTC");
@@ -63,8 +69,62 @@ function tick() {
   const ss = String(d.getUTCSeconds()).padStart(2, "0");
   utcTime.value = `${hh}:${mm}:${ss} UTC`;
 }
-onMounted(() => { tick(); timer = setInterval(tick, 1000); });
-onUnmounted(() => clearInterval(timer));
+
+// Scrolling ticker: latest results + headline stats
+const recentMatches = ref([]);
+const topPlayer = ref(null);
+const tickerKpis = ref({ totalMatches: 0, mapsPlayed: 0 });
+
+let tickerTimer;
+async function loadTickerData() {
+  try {
+    const [{ data: matches }, { data: stats }] = await Promise.all([
+      getMatches({ status: "finished" }),
+      getStats(),
+    ]);
+    recentMatches.value = matches.slice(0, 6);
+    topPlayer.value = (stats.players || [])[0] || null;
+    tickerKpis.value = stats.kpis || tickerKpis.value;
+  } catch {
+    // the ticker is decorative — fail silently and keep the previous content
+  }
+}
+
+const tickerItems = computed(() => {
+  const items = [];
+
+  for (const m of recentMatches.value) {
+    const { t1, t2 } = matchScore(m);
+    items.push(`RÉSULTAT · ${getTeamTag(m.team1_name)} ${t1}–${t2} ${getTeamTag(m.team2_name)}`);
+  }
+
+  if (topPlayer.value) {
+    items.push(
+      `TOP FRAGGER · ${topPlayer.value.name} — ${topPlayer.value.kills} KILLS · RATING ${Number(topPlayer.value.rating).toFixed(2)}`
+    );
+  }
+
+  if (tickerKpis.value.totalMatches) {
+    items.push(`${tickerKpis.value.totalMatches} MATCHS JOUÉS · ${tickerKpis.value.mapsPlayed} MAPS`);
+  }
+
+  if (!items.length) {
+    items.push("TOURNAMENT STATS · CS2 / CS:GO · POWERED BY GET5");
+  }
+
+  return items;
+});
+
+onMounted(() => {
+  tick();
+  timer = setInterval(tick, 1000);
+  loadTickerData();
+  tickerTimer = setInterval(loadTickerData, 60000);
+});
+onUnmounted(() => {
+  clearInterval(timer);
+  clearInterval(tickerTimer);
+});
 </script>
 
 <style>
