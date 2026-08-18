@@ -31,54 +31,50 @@
         </div>
       </div>
 
-      <!-- Round bars -->
-      <div class="axis">
-        <template v-for="(r, i) in rounds" :key="r.round_num">
-          <div v-if="i === 12" class="half-divider" />
-          <div
-            v-else-if="i > 12 && r.round_num >= 25 && (r.round_num - 25) % 6 === 0"
-            class="half-divider"
-          />
-          <div
-            class="round-cell"
-            @mouseenter="hoverRound = r; hoverIdx = i; updatePos($event)"
-            @mouseleave="hoverRound = null"
-            @mousemove="updatePos"
-          >
-            <div class="num">{{ r.round_num }}</div>
-            <div :class="'bar ' + winClass(r)">
-              <div :class="'side-strip ' + sideClass(r)" />
-              <span class="reason-icon">{{ reasonGlyph(r.reason) }}</span>
-            </div>
+      <!-- Round-by-round grid: one row per team -->
+      <div class="rbr">
+        <div class="rbr-row rbr-header">
+          <div class="rbr-teamname" />
+          <div class="rbr-rounds">
+            <template v-for="col in columns" :key="col.key">
+              <div v-if="col.divider" class="half-divider" />
+              <div v-else class="rbr-num">{{ col.round.round_num }}</div>
+            </template>
           </div>
-        </template>
+        </div>
+
+        <div
+          v-for="team in [
+            { name: team1Name, tag: team1Tag, won: t1WonRound },
+            { name: team2Name, tag: team2Tag, won: t2WonRound },
+          ]"
+          :key="team.name"
+          class="rbr-row"
+        >
+          <div class="rbr-teamname" :title="team.name">{{ team.tag || team.name }}</div>
+          <div class="rbr-rounds">
+            <template v-for="col in columns" :key="col.key">
+              <div v-if="col.divider" class="half-divider" />
+              <div
+                v-else
+                class="rbr-cell"
+                :class="{ won: team.won(col.i) }"
+                :style="{ background: team.won(col.i) ? sideColor(col.round) : '' }"
+                @mouseenter="hoverRound = col.round; hoverIdx = col.i; updatePos($event)"
+                @mouseleave="hoverRound = null"
+                @mousemove="updatePos"
+              >
+                <span v-if="team.won(col.i)" class="reason-icon">{{ reasonGlyph(col.round.reason) }}</span>
+              </div>
+            </template>
+          </div>
+        </div>
       </div>
 
       <div class="legend">
         <span><span class="swatch" style="background:var(--ct)" />CT WIN</span>
         <span><span class="swatch" style="background:var(--t)" />T WIN</span>
-        <span><span class="swatch" style="background:var(--accent)" />{{ team1Tag }} WIN (CT start)</span>
-        <span><span class="swatch" style="background:var(--ink-2)" />{{ team2Tag }} WIN</span>
         <span style="margin-left:auto">K · KILLS &nbsp; X · BOMB &nbsp; D · DEFUSE &nbsp; T · TIME</span>
-      </div>
-    </div>
-
-    <!-- Running score grid -->
-    <div
-      style="margin-top:32px;display:grid;gap:2px;font-family:var(--font-mono);font-size:9px;color:var(--ink-3)"
-      :style="{ gridTemplateColumns: `repeat(${rounds.length}, 1fr)` }"
-    >
-      <div
-        v-for="(r, i) in rounds"
-        :key="r.round_num"
-        style="text-align:center;padding:4px 0;border-top:1px solid var(--line)"
-      >
-        <div :style="{ color: t1WonRound(i) ? 'var(--accent)' : 'var(--ink-3)' }">
-          {{ r.t1_score_after ?? 0 }}
-        </div>
-        <div :style="{ color: t2WonRound(i) ? 'var(--accent)' : 'var(--ink-3)' }">
-          {{ r.t2_score_after ?? 0 }}
-        </div>
       </div>
     </div>
 
@@ -156,12 +152,20 @@ const tooltipStyle = computed(() => {
   return { left: left + "px", top: top + "px", width: w + "px" };
 });
 
-function winClass(r) {
-  return r.winner_side === "CT" ? "a-win" : "b-win";
+function sideColor(r) {
+  return r.winner_side === "CT" ? "var(--ct)" : "var(--t)";
 }
-function sideClass(r) {
-  return r.winner_side === "CT" ? "ct" : "t";
-}
+
+const columns = computed(() => {
+  const cols = [];
+  props.rounds.forEach((r, i) => {
+    if (i === 12 || (i > 12 && r.round_num >= 25 && (r.round_num - 25) % 6 === 0)) {
+      cols.push({ divider: true, key: "div-" + i });
+    }
+    cols.push({ round: r, i, key: r.round_num });
+  });
+  return cols;
+});
 
 function t1WonRound(i) {
   const curr = props.rounds[i]?.t1_score_after ?? 0;
