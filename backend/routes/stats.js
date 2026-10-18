@@ -93,6 +93,7 @@ router.get("/", async (req, res) => {
         ORDER BY kills DESC
       `, params);
       for (const w of wRows) {
+        if (!w.weapon) continue;
         if (!favWeapon[w.steam_id]) {
           favWeapon[w.steam_id] = {
             weapon: WEAPON_LABELS[w.weapon.toLowerCase()] || w.weapon,
@@ -110,7 +111,8 @@ router.get("/", async (req, res) => {
         COUNT(*) AS played
       FROM map_stats ms
       JOIN \`match\` m ON m.id = ms.match_id
-      WHERE m.cancelled = 0 AND ms.end_time IS NOT NULL ${seasonFilter}
+      WHERE m.cancelled = 0 AND ms.end_time IS NOT NULL
+        AND ms.map_name IS NOT NULL AND ms.map_name <> '' ${seasonFilter}
       GROUP BY ms.map_name
       ORDER BY played DESC
       LIMIT 8
@@ -119,7 +121,7 @@ router.get("/", async (req, res) => {
     // Weapon totals
     let weaponData = [];
     try {
-      const [wTotals] = await db.query(`
+      const [wRows2] = await db.query(`
         SELECT pse.weapon, COUNT(*) AS kills
         FROM player_stat_extras pse
         JOIN map_stats ms ON ms.id = pse.map_id
@@ -129,6 +131,7 @@ router.get("/", async (req, res) => {
         GROUP BY pse.weapon
         ORDER BY kills DESC
       `, params);
+      const wTotals = wRows2.filter(w => w.weapon);
 
       const buckets = {};
       const totalWK = wTotals.reduce((s, w) => s + parseInt(w.kills), 0);
@@ -158,7 +161,7 @@ router.get("/", async (req, res) => {
         totalMatches: parseInt(kpis.total_matches) || 0,
         mapsPlayed:   parseInt(kpis.maps_played)   || 0,
         totalKills:   parseInt(kpis.total_kills)   || 0,
-        avgAdr: Math.round(parseInt(kpis.total_damage) / rounds * 10) / 10,
+        avgAdr: Math.round((parseInt(kpis.total_damage) || 0) / rounds * 10) / 10,
       },
       players: rawPlayers.map(p => ({
         steam_id: p.steam_id,
@@ -175,9 +178,9 @@ router.get("/", async (req, res) => {
         weapon:   (favWeapon[p.steam_id] || {}).weapon || "—",
       })),
       mapStats: mapStats.map(m => ({
-        map:    m.map_name.replace("de_", "").replace(/^./, c => c.toUpperCase()),
-        ctWins: parseInt(m.ct_wins),
-        tWins:  parseInt(m.t_wins),
+        map:    String(m.map_name).replace("de_", "").replace(/^./, c => c.toUpperCase()),
+        ctWins: parseInt(m.ct_wins) || 0,
+        tWins:  parseInt(m.t_wins)  || 0,
         played: parseInt(m.played),
       })),
       weaponData,
