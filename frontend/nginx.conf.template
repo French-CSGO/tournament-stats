@@ -26,6 +26,12 @@ server {
         client_max_body_size 500m;
     }
 
+    # Page SPA « démos d'une saison » : servie par Vue, pas par le backend
+    # (sinon un accès direct à /demos/season/:id part en proxy → 404)
+    location /demos/season/ {
+        try_files $uri /index.html;
+    }
+
     location /demos/ {
         proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/demos/;
     }
