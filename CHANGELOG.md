@@ -1,6 +1,6 @@
 # Changelog
 
-## [Non publié]
+## [0.8.0] - 2026-10-19
 
 ### Ajouté
 - **Page publique « Démos »** (`/demos`, `/demos/season/:id`, lien `DEMOS` dans la barre de navigation et bouton depuis la page saison) : liste de toutes les démos d'une saison regroupées par match, avec téléchargement individuel par map
