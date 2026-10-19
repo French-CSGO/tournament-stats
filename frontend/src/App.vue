@@ -20,6 +20,7 @@
           <router-link to="/" class="nav-link" :class="{ on: isHub }">HUB</router-link>
           <router-link to="/matches" class="nav-link" :class="{ on: route.path.startsWith('/matches') }">MATCHES</router-link>
           <router-link to="/stats" class="nav-link" :class="{ on: route.path.startsWith('/stats') }">STATS</router-link>
+          <router-link to="/demos" class="nav-link" :class="{ on: route.path.startsWith('/demos') }">DEMOS</router-link>
           <router-link to="/admin" class="nav-link" :class="{ on: route.path.startsWith('/admin') }">ADMIN</router-link>
         </span>
       </header>

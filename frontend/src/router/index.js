@@ -8,6 +8,7 @@ import StatsView    from "../views/StatsView.vue";
 import AdminView        from "../views/AdminView.vue";
 import TournamentView  from "../views/TournamentView.vue";
 import SwissPreviewView from "../views/SwissPreviewView.vue";
+import DemosView        from "../views/DemosView.vue";
 
 export default createRouter({
   history: createWebHistory(),
@@ -22,6 +23,8 @@ export default createRouter({
     { path: "/teams/:id",      component: TeamsView },
     { path: "/stats",              component: StatsView },
     { path: "/stats/season/:id",   component: StatsView },
+    { path: "/demos",              component: DemosView },
+    { path: "/demos/season/:id",   component: DemosView },
     { path: "/admin",        component: AdminView },
     { path: "/swiss-preview", component: SwissPreviewView },
   ],

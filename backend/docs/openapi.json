@@ -102,6 +102,59 @@
         }
       }
     },
+    "/seasons/{id}/demos": {
+      "get": {
+        "summary": "Démos téléchargeables d'une saison",
+        "tags": ["Seasons"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "team_id", "in": "query", "required": false, "description": "Restreint aux matchs de cette équipe", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saison, équipes ayant au moins une démo, et démos présentes sur disque (téléchargement individuel via `/demos/{demoFile}`)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "season": { "id": 4, "name": "Saison 4", "start_date": "2026-01-12", "end_date": "2026-04-20" },
+                  "teams": [{ "id": 9, "name": "Kalunga" }, { "id": 7, "name": "Vitality Academy" }],
+                  "demos": [
+                    {
+                      "map_id": 1203, "match_id": 512, "map_number": 0, "map_name": "de_mirage",
+                      "demoFile": "512_map0_de_mirage.dem.zip", "team1_score": 16, "team2_score": 10,
+                      "end_time": "2026-04-18T19:45:00.000Z", "max_maps": 3,
+                      "team1_id": 7, "team1_name": "Vitality Academy", "team2_id": 9, "team2_name": "Kalunga",
+                      "size": 84213760
+                    }
+                  ],
+                  "total_size": 84213760
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "404": { "description": "Saison introuvable" }
+        }
+      }
+    },
+    "/seasons/{id}/demos/archive": {
+      "get": {
+        "summary": "Archive ZIP des démos d'une saison (ou d'une équipe dans la saison)",
+        "description": "ZIP streamé sans recompression : une démo par map, rangée dans un dossier par match.",
+        "tags": ["Seasons"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "team_id", "in": "query", "required": false, "description": "Restreint aux matchs de cette équipe", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Archive ZIP", "content": { "application/zip": { "schema": { "type": "string", "format": "binary" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "404": { "description": "Saison ou équipe introuvable, ou aucune démo disponible" }
+        }
+      }
+    },
     "/matches/{id}": {
       "get": {
         "summary": "Détail d'un match (maps, vetos, stats joueurs)",
