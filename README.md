@@ -120,6 +120,8 @@ npm run dev            # Vite sur :5173
 | Méthode | Route | Description | Clé API requise |
 |---------|-------|-------------|:---:|
 | GET | `/api/seasons` | Liste des saisons | ✅ |
+| GET | `/api/seasons/:id/demos` | Démos d'une saison (`?team_id=` pour une équipe) | ✅ |
+| GET | `/api/seasons/:id/demos/archive` | ZIP des démos d'une saison (`?team_id=` pour une équipe) | ✅ |
 | GET | `/api/matches/:id` | Détail d'un match | ✅ |
 | GET | `/api/teams` | Équipes | ✅ |
 | GET | `/api/players/:steamId/avatar` | Avatar Steam | ✅ |

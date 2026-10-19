@@ -8,6 +8,16 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # Archives ZIP de démos : streamées directement (pas de buffer disque nginx)
+    location ~ ^/api/seasons/[0-9]+/demos/archive {
+        proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Api-Key "${INTERNAL_API_KEY}";
+        proxy_buffering off;
+        proxy_read_timeout 600s;
+    }
+
     location /api/ {
         proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/api/;
         proxy_set_header Host $host;

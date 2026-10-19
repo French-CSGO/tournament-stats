@@ -26,3 +26,9 @@ export const getMapRounds = (mapId) => api.get(`/rounds/${mapId}`);
 
 export const getSeasonTournaments = (seasonId) => api.get(`/tournaments/season/${seasonId}`);
 export const getTournament = (slug) => api.get(`/tournaments/${slug}`);
+
+export const getSeasonDemos = (seasonId, teamId) =>
+  api.get(`/seasons/${seasonId}/demos`, { params: teamId ? { team_id: teamId } : {} });
+// URL directe (lien <a>) : le ZIP est streamé par le backend, pas chargé via axios
+export const seasonDemosArchiveUrl = (seasonId, teamId) =>
+  `/api/seasons/${seasonId}/demos/archive${teamId ? `?team_id=${teamId}` : ""}`;

@@ -1,5 +1,15 @@
 # Changelog
 
+## [Non publié]
+
+### Ajouté
+- **Page publique « Démos »** (`/demos`, `/demos/season/:id`, lien `DEMOS` dans la barre de navigation et bouton depuis la page saison) : liste de toutes les démos d'une saison regroupées par match, avec téléchargement individuel par map
+- Téléchargement groupé en **ZIP** de toutes les démos d'une saison, ou de toutes les démos d'une équipe dans une saison (filtre équipe)
+- Routes `GET /api/seasons/:id/demos` et `GET /api/seasons/:id/demos/archive` (`?team_id=` optionnel) — ZIP streamé sans recompression (dépendance `archiver`), démos absentes du disque ignorées
+- Nginx : location dédiée à l'archive avec `proxy_buffering off` pour streamer les gros ZIP
+
+---
+
 ## [0.7.0] - 2026-07-21
 
 ### Ajouté
